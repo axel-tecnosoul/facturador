@@ -1,0 +1,2 @@
+ALTER TABLE clientes ADD COLUMN precio_base DECIMAL(10,2) DEFAULT NULL AFTER email;
+ALTER TABLE clientes ADD COLUMN fecha_base DATE DEFAULT NULL AFTER precio_base;
