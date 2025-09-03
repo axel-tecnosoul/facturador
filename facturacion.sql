@@ -102,6 +102,19 @@ CREATE TABLE `usuarios` (
   `fecha_hora_ultimo_ingreso` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `ipc_historial`
+--
+
+CREATE TABLE `ipc_historial` (
+  `id` int(11) NOT NULL,
+  `anio` int(11) NOT NULL,
+  `mes` int(11) NOT NULL,
+  `porcentaje` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 --
 -- Índices para tablas volcadas
 --
@@ -142,6 +155,12 @@ ALTER TABLE `pagos_colaboradores`
 --
 ALTER TABLE `usuarios`
   ADD PRIMARY KEY (`id`);
+--
+-- Indices de la tabla `ipc_historial`
+--
+ALTER TABLE `ipc_historial`
+  ADD PRIMARY KEY (`id`);
+
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -172,6 +191,11 @@ ALTER TABLE `pagos_colaboradores`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de la tabla `ipc_historial`
+--
+ALTER TABLE `ipc_historial`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
