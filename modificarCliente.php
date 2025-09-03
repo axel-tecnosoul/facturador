@@ -16,14 +16,25 @@ if ( null==$id ) {
 }
 
 if ( !empty($_POST)) {
-  
+
   // insert data
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  
-  $sql = "UPDATE clientes set razon_social = ?, cuit = ?, email = ?, telefono = ?, direccion = ? where id = ?";
+  $precio_base = filter_input(INPUT_POST, 'precio_base', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+  $fecha_base = filter_input(INPUT_POST, 'fecha_base', FILTER_SANITIZE_STRING);
+
+  $sql = "UPDATE clientes set razon_social = ?, cuit = ?, email = ?, telefono = ?, direccion = ?, precio_base = ?, fecha_base = ? where id = ?";
   $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['razon_social'],$_POST['cuit'],$_POST['email'],$_POST['telefono'],$_POST['direccion'],$_GET['id']));
+  $q->execute(array(
+    $_POST['razon_social'],
+    $_POST['cuit'],
+    $_POST['email'],
+    $_POST['telefono'],
+    $_POST['direccion'],
+    $precio_base,
+    $fecha_base,
+    $_GET['id']
+  ));
   
   Database::disconnect();
   
@@ -33,7 +44,7 @@ if ( !empty($_POST)) {
   
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  $sql = "SELECT id, razon_social, cuit, email, telefono, direccion FROM clientes WHERE id = ? ";
+  $sql = "SELECT id, razon_social, cuit, email, telefono, direccion, precio_base, fecha_base FROM clientes WHERE id = ? ";
   $q = $pdo->prepare($sql);
   $q->execute(array($id));
   $data = $q->fetch(PDO::FETCH_ASSOC);
@@ -113,6 +124,14 @@ if ( !empty($_POST)) {
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">E-mail</label>
                             <div class="col-sm-9"><input name="email" type="text" maxlength="99" class="form-control" value="<?=$data['email']?>"></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Precio Base</label>
+                            <div class="col-sm-9"><input name="precio_base" type="number" step="0.01" class="form-control" value="<?=$data['precio_base']?>"></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Fecha Base</label>
+                            <div class="col-sm-9"><input name="fecha_base" type="date" class="form-control" value="<?=$data['fecha_base']?>"></div>
                           </div>
                         </div>
                       </div>

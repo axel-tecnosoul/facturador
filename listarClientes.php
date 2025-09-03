@@ -98,6 +98,7 @@ include("database.php");?>
                             <th>E-Mail</th>
                             <th>Teléfono</th>
                             <th>Direccion</th>
+                            <th>Precio Base</th>
                             <th>Opciones</th>
                           </tr>
                         </thead>
@@ -222,6 +223,7 @@ include("database.php");?>
             {"data": "email"},
             {"data": "telefono"},
             {"data": "direccion"},
+            {"data": "precio_base"},
             {"data": "acciones"},
           ],
           drawCallback: function(settings, json){

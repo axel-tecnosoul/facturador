@@ -6,14 +6,25 @@ if(empty($_SESSION['user'])){
 }
 require 'database.php';
 if ( !empty($_POST)) {
-  
+
   // insert data
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  
-  $sql = "INSERT INTO clientes (razon_social,cuit,direccion,telefono,email,id_usuario) VALUES (?,?,?,?,?,?)";
+  $precio_base = filter_input(INPUT_POST, 'precio_base', FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+  $fecha_base = filter_input(INPUT_POST, 'fecha_base', FILTER_SANITIZE_STRING);
+
+  $sql = "INSERT INTO clientes (razon_social,cuit,direccion,telefono,email,precio_base,fecha_base,id_usuario) VALUES (?,?,?,?,?,?,?,?)";
   $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['razon_social'],$_POST['cuit'],$_POST['direccion'],$_POST['telefono'],$_POST['email'],$_SESSION["user"]['id']));
+  $q->execute(array(
+    $_POST['razon_social'],
+    $_POST['cuit'],
+    $_POST['direccion'],
+    $_POST['telefono'],
+    $_POST['email'],
+    $precio_base,
+    $fecha_base,
+    $_SESSION["user"]['id']
+  ));
   
   Database::disconnect();
   
@@ -92,6 +103,14 @@ if ( !empty($_POST)) {
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">E-mail</label>
                             <div class="col-sm-9"><input name="email" type="text" maxlength="99" class="form-control" value=""></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Precio Base</label>
+                            <div class="col-sm-9"><input name="precio_base" type="number" step="0.01" class="form-control" value=""></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Fecha Base</label>
+                            <div class="col-sm-9"><input name="fecha_base" type="date" class="form-control" value=""></div>
                           </div>
                         </div>
                       </div>
