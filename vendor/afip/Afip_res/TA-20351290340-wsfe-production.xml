@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1.0">
+    <header>
+        <source>CN=wsaa, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>SERIALNUMBER=CUIT 30717754200, CN=miroperito 1</destination>
+        <uniqueId>3602855325</uniqueId>
+        <generationTime>2023-01-05T16:52:56.751-03:00</generationTime>
+        <expirationTime>2023-01-06T04:52:56.751-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBkc3Q9IkNOPXdzZmUsIE89QUZJUCwgQz1BUiIgdW5pcXVlX2lkPSIzMTUxOTUzOTY3IiBnZW5fdGltZT0iMTY3Mjk0ODMxNiIgZXhwX3RpbWU9IjE2NzI5OTE1NzYiLz4KICAgIDxvcGVyYXRpb24gdHlwZT0ibG9naW4iIHZhbHVlPSJncmFudGVkIj4KICAgICAgICA8bG9naW4gZW50aXR5PSIzMzY5MzQ1MDIzOSIgc2VydmljZT0id3NmZSIgdWlkPSJTRVJJQUxOVU1CRVI9Q1VJVCAzMDcxNzc1NDIwMCwgQ049bWlyb3Blcml0byAxIiBhdXRobWV0aG9kPSJjbXMiIHJlZ21ldGhvZD0iMjIiPgogICAgICAgICAgICA8cmVsYXRpb25zPgogICAgICAgICAgICAgICAgPHJlbGF0aW9uIGtleT0iMzA3MTc3NTQyMDAiIHJlbHR5cGU9IjQiLz4KICAgICAgICAgICAgPC9yZWxhdGlvbnM+CiAgICAgICAgPC9sb2dpbj4KICAgIDwvb3BlcmF0aW9uPgo8L3Nzbz4K</token>
+        <sign>jDZDxdRBBCzREvSS/FRDgBcMJypGRbKPVchAg9qBTU7UqVaLWTsMFpVTZjFK/UWWnk1SOGus0XEzcS2zJkOKKNCUmgJPs8eXoe5rPicAdF9xQLyH199UFH3BZTqXFTaSr3coL6mvcnYhYV54OSn7LEGBPgce31ZwDl3hbBW3Q04=</sign>
+    </credentials>
+</loginTicketResponse>

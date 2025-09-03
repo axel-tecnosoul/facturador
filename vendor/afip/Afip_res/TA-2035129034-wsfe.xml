@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1.0">
+    <header>
+        <source>CN=wsaahomo, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>SERIALNUMBER=CUIT 20351290340, CN=axelbritzius2024</destination>
+        <uniqueId>3710829939</uniqueId>
+        <generationTime>2025-03-24T13:44:03.366-03:00</generationTime>
+        <expirationTime>2025-03-25T01:44:03.366-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhaG9tbywgTz1BRklQLCBDPUFSLCBTRVJJQUxOVU1CRVI9Q1VJVCAzMzY5MzQ1MDIzOSIgZHN0PSJDTj13c2ZlLCBPPUFGSVAsIEM9QVIiIHVuaXF1ZV9pZD0iOTcxMTUyMzU0IiBnZW5fdGltZT0iMTc0MjgzNDU4MyIgZXhwX3RpbWU9IjE3NDI4Nzc4NDMiLz4KICAgIDxvcGVyYXRpb24gdHlwZT0ibG9naW4iIHZhbHVlPSJncmFudGVkIj4KICAgICAgICA8bG9naW4gZW50aXR5PSIzMzY5MzQ1MDIzOSIgc2VydmljZT0id3NmZSIgdWlkPSJTRVJJQUxOVU1CRVI9Q1VJVCAyMDM1MTI5MDM0MCwgQ049YXhlbGJyaXR6aXVzMjAyNCIgYXV0aG1ldGhvZD0iY21zIiByZWdtZXRob2Q9IjIyIj4KICAgICAgICAgICAgPHJlbGF0aW9ucz4KICAgICAgICAgICAgICAgIDxyZWxhdGlvbiBrZXk9IjIwMzUxMjkwMzQwIiByZWx0eXBlPSI0Ii8+CiAgICAgICAgICAgIDwvcmVsYXRpb25zPgogICAgICAgIDwvbG9naW4+CiAgICA8L29wZXJhdGlvbj4KPC9zc28+Cg==</token>
+        <sign>VTjx130uk2OIsCRpwVDSM7orpV9CkB5TkfSStxEzkfFeVwbnd2bRugOZdwN/dAHjF9Ip1ktVPNJzOOJLYQm0LCVhNKenMYaHGBsGTHoPcadjMhlrQTz6DWjQmt5FopUBcO8nPe3fZfASGN29kmmNDsM4b/t85pCJzweHefyQ6po=</sign>
+    </credentials>
+</loginTicketResponse>

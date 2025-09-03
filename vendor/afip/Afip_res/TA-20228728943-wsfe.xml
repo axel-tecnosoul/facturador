@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1.0">
+    <header>
+        <source>CN=wsaahomo, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+        <destination>SERIALNUMBER=CUIT 20228728943, CN=fehomologacion1</destination>
+        <uniqueId>898828070</uniqueId>
+        <generationTime>2025-02-20T18:32:18.704-03:00</generationTime>
+        <expirationTime>2025-02-21T06:32:18.704-03:00</expirationTime>
+    </header>
+    <credentials>
+        <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhaG9tbywgTz1BRklQLCBDPUFSLCBTRVJJQUxOVU1CRVI9Q1VJVCAzMzY5MzQ1MDIzOSIgZHN0PSJDTj13c2ZlLCBPPUFGSVAsIEM9QVIiIHVuaXF1ZV9pZD0iMjU5NzkxMzIxNyIgZ2VuX3RpbWU9IjE3NDAwODcwNzgiIGV4cF90aW1lPSIxNzQwMTMwMzM4Ii8+CiAgICA8b3BlcmF0aW9uIHR5cGU9ImxvZ2luIiB2YWx1ZT0iZ3JhbnRlZCI+CiAgICAgICAgPGxvZ2luIGVudGl0eT0iMzM2OTM0NTAyMzkiIHNlcnZpY2U9IndzZmUiIHVpZD0iU0VSSUFMTlVNQkVSPUNVSVQgMjAyMjg3Mjg5NDMsIENOPWZlaG9tb2xvZ2FjaW9uMSIgYXV0aG1ldGhvZD0iY21zIiByZWdtZXRob2Q9IjIyIj4KICAgICAgICAgICAgPHJlbGF0aW9ucz4KICAgICAgICAgICAgICAgIDxyZWxhdGlvbiBrZXk9IjIwMjI4NzI4OTQzIiByZWx0eXBlPSI0Ii8+CiAgICAgICAgICAgIDwvcmVsYXRpb25zPgogICAgICAgIDwvbG9naW4+CiAgICA8L29wZXJhdGlvbj4KPC9zc28+Cg==</token>
+        <sign>OdEO4aiDM9/IrO83MkjLDB6SEgDtTla0EcZgQLKqmE0eLpvY79zVebQl+/5ZghraoqRZxInj9LfCK9h/5Sh2OpNRowczj/GPCngai7xMfzPc1hoedfcaIl3y/a9Iz5z8kP3d0HPtN9fjlTPiuoeJgy/pLVHUg/60ruSwYTDykW4=</sign>
+    </credentials>
+</loginTicketResponse>
