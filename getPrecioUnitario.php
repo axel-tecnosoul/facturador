@@ -16,10 +16,9 @@ if(!empty($_GET['id_cliente']) && !empty($_GET['fecha_factura'])) {
     if($fecha_fin > $fecha_inicio){
       $fecha_inicio->modify('first day of next month');
       while($fecha_inicio <= $fecha_fin){
-        $anio = (int)$fecha_inicio->format('Y');
-        $mes = (int)$fecha_inicio->format('n');
-        $q2 = $pdo->prepare("SELECT porcentaje FROM ipc_historial WHERE anio=? AND mes=?");
-        $q2->execute(array($anio, $mes));
+        $periodo = $fecha_inicio->format('Y-m-01');
+        $q2 = $pdo->prepare("SELECT porcentaje FROM ipc_historial WHERE periodo = ?");
+        $q2->execute(array($periodo));
         $ipc = $q2->fetch(PDO::FETCH_ASSOC);
         if($ipc){
           $factor *= (1 + $ipc['porcentaje']/100);

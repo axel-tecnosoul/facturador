@@ -19,10 +19,9 @@ function calcularPrecioActual($pdo, $precio_base, $fecha_base, $fecha_fin){
     if($fin > $inicio){
         $inicio->modify('first day of next month');
         while($inicio <= $fin){
-            $anio = (int)$inicio->format('Y');
-            $mes  = (int)$inicio->format('n');
-            $stmt = $pdo->prepare("SELECT porcentaje FROM ipc_historial WHERE anio=? AND mes=?");
-            $stmt->execute([$anio, $mes]);
+            $periodo = $inicio->format('Y-m-01');
+            $stmt = $pdo->prepare("SELECT porcentaje FROM ipc_historial WHERE periodo = ?");
+            $stmt->execute([$periodo]);
             $ipc = $stmt->fetch(PDO::FETCH_ASSOC);
             if($ipc){
                 $factor *= (1 + $ipc['porcentaje']/100);

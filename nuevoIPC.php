@@ -12,21 +12,24 @@ if (!empty($_GET['id'])) {
 }
 
 if (!empty($_POST)) {
-  $anio = $_POST['anio'];
-  $mes = $_POST['mes'];
+  $periodo = $_POST['periodo'];
+  // Guardar como primer día del mes
+  if ($periodo && strlen($periodo) == 7) {
+    $periodo .= '-01';
+  }
   $porcentaje = $_POST['porcentaje'];
 
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
   if ($id) {
-    $sql = "UPDATE ipc_historial SET anio=?, mes=?, porcentaje=? WHERE id=?";
+    $sql = "UPDATE ipc_historial SET periodo=?, porcentaje=? WHERE id=?";
     $q = $pdo->prepare($sql);
-    $q->execute(array($anio, $mes, $porcentaje, $id));
+    $q->execute(array($periodo, $porcentaje, $id));
   } else {
-    $sql = "INSERT INTO ipc_historial (anio,mes,porcentaje) VALUES (?,?,?)";
+    $sql = "INSERT INTO ipc_historial (periodo,porcentaje) VALUES (?,?)";
     $q = $pdo->prepare($sql);
-    $q->execute(array($anio, $mes, $porcentaje));
+    $q->execute(array($periodo, $porcentaje));
   }
   Database::disconnect();
   header("Location: listarIPC.php");
@@ -39,13 +42,11 @@ if ($id) {
   $q = $pdo->prepare($sql);
   $q->execute(array($id));
   $data = $q->fetch(PDO::FETCH_ASSOC);
-  $anio = $data['anio'];
-  $mes = $data['mes'];
+  $periodo = substr($data['periodo'],0,7);
   $porcentaje = $data['porcentaje'];
   Database::disconnect();
 } else {
-  $anio = '';
-  $mes = '';
+  $periodo = '';
   $porcentaje = '';
 }
 ?>
@@ -79,12 +80,8 @@ if ($id) {
                       <div class="row">
                         <div class="col">
                           <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Año</label>
-                            <div class="col-sm-9"><input name="anio" type="number" class="form-control" value="<?=$anio;?>" required></div>
-                          </div>
-                          <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Mes</label>
-                            <div class="col-sm-9"><input name="mes" type="number" min="1" max="12" class="form-control" value="<?=$mes;?>" required></div>
+                            <label class="col-sm-3 col-form-label">Periodo</label>
+                            <div class="col-sm-9"><input name="periodo" type="month" class="form-control" value="<?=$periodo;?>" required></div>
                           </div>
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">Porcentaje</label>

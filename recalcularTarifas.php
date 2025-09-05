@@ -17,10 +17,9 @@ try {
         if ($fecha_fin > $fecha_inicio) {
             $fecha_inicio->modify('first day of next month');
             while ($fecha_inicio <= $fecha_fin) {
-                $anio = (int)$fecha_inicio->format('Y');
-                $mes = (int)$fecha_inicio->format('n');
-                $q = $pdo->prepare('SELECT porcentaje FROM ipc_historial WHERE anio=? AND mes=?');
-                $q->execute(array($anio, $mes));
+                $periodo = $fecha_inicio->format('Y-m-01');
+                $q = $pdo->prepare('SELECT porcentaje FROM ipc_historial WHERE periodo = ?');
+                $q->execute(array($periodo));
                 $ipc = $q->fetch(PDO::FETCH_ASSOC);
                 if ($ipc) {
                     $factor *= (1 + $ipc['porcentaje']/100);

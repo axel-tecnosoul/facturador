@@ -115,8 +115,7 @@ CREATE TABLE `usuarios` (
 
 CREATE TABLE `ipc_historial` (
   `id` int(11) NOT NULL,
-  `anio` int(11) NOT NULL,
-  `mes` int(11) NOT NULL,
+  `periodo` date NOT NULL,
   `porcentaje` decimal(10,2) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
