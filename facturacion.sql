@@ -36,6 +36,7 @@ CREATE TABLE `clientes` (
   `email` varchar(100) DEFAULT NULL,
   `precio_base` decimal(10,2) DEFAULT NULL,
   `fecha_base` date DEFAULT NULL,
+  `precio_actual` decimal(10,2) DEFAULT NULL,
   `id_usuario` int(11) DEFAULT NULL,
   `fecha_hora_alta` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -51,6 +52,8 @@ CREATE TABLE `cobros` (
   `id_cliente` int(11) DEFAULT NULL,
   `fecha_factura` date DEFAULT NULL,
   `fecha_cobro` date DEFAULT NULL,
+  `horas` decimal(10,2) DEFAULT NULL,
+  `precio_unitario` decimal(10,2) DEFAULT NULL,
   `monto_pesos` decimal(10,2) DEFAULT NULL,
   `cotizacion_usd` int(11) NOT NULL DEFAULT 0,
   `monto_dolares` decimal(10,2) DEFAULT NULL,

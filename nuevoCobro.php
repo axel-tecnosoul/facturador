@@ -12,24 +12,23 @@ if ( !empty($_POST)) {
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
   $cotizacion_usd=$_POST['cotizacion_usd'];
-  $monto_pesos=$_POST['monto_pesos'];
+  $horas=$_POST['horas'];
+  $precio_unitario=$_POST['precio_unitario'];
+  $monto_pesos=$horas*$precio_unitario;
   $fecha_cobro=$_POST['fecha_cobro'];
   if($fecha_cobro==""){
     $fecha_cobro=null;
   }
 
-  /*$sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,monto_dolares,detalle,id_usuario) VALUES (?,?,?,?,?,?,?)";
-  $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$_POST['monto_pesos'],$_POST['monto_dolares'],$_POST['detalle'],$_SESSION["user"]['id']));*/
 
   $monto_dolares=0;
   if($cotizacion_usd>0){
     $monto_dolares=$monto_pesos/$cotizacion_usd;
   }
 
-  $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario) VALUES (?,?,?,?,?,?,?,?)";
+$sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,horas,precio_unitario,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario) VALUES (?,?,?,?,?,?,?,?,?,?)";
   $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$_POST['cotizacion_usd'],$monto_dolares,$_POST['detalle'],$_SESSION["user"]['id']));
+  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$horas,$precio_unitario,$monto_pesos,$_POST['cotizacion_usd'],$monto_dolares,$_POST['detalle'],$_SESSION["user"]['id']));
   
   Database::disconnect();
   
@@ -121,8 +120,16 @@ $hoy=date("Y-m-d")?>
                             <div class="col-sm-9"><input name="fecha_cobro" type="date" class="form-control"></div>
                           </div>
                           <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Horas</label>
+                            <div class="col-sm-9"><input name="horas" id="horas" type="number" step="0.01" class="form-control" value="" required></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Precio unitario</label>
+                            <div class="col-sm-9"><input name="precio_unitario" id="precio_unitario" type="number" step="0.01" class="form-control" value="" readonly></div>
+                          </div>
+                          <div class="form-group row">
                             <label class="col-sm-3 col-form-label">Monto en pesos</label>
-                            <div class="col-sm-9"><input name="monto_pesos" type="number" maxlength="99" class="form-control" value="" required></div>
+                            <div class="col-sm-9"><input name="monto_pesos" id="monto_pesos" type="number" step="0.01" class="form-control" value="" readonly></div>
                           </div>
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">Cotizacion USD</label>
@@ -174,5 +181,30 @@ $hoy=date("Y-m-d")?>
     <!-- Plugin used-->
 	  <script src="assets/js/select2/select2.full.min.js"></script>
     <script src="assets/js/select2/select2-custom.js"></script>
+    <script>
+      function actualizarPrecio(){
+        var id_cliente = $('select[name=id_cliente]').val();
+        var fecha_factura = $('input[name=fecha_factura]').val();
+        if(id_cliente && fecha_factura){
+          $.getJSON('getPrecioUnitario.php',{id_cliente:id_cliente,fecha_factura:fecha_factura},function(data){
+            if(data && data.precio_unitario){
+              $('#precio_unitario').val(data.precio_unitario);
+              calcularMonto();
+            }
+          });
+        }
+      }
+      function calcularMonto(){
+        var horas = parseFloat($('#horas').val());
+        var precio = parseFloat($('#precio_unitario').val());
+        if(!isNaN(horas) && !isNaN(precio)){
+          $('#monto_pesos').val((horas*precio).toFixed(2));
+        }
+      }
+      $(document).ready(function(){
+        $('select[name=id_cliente], input[name=fecha_factura]').change(actualizarPrecio);
+        $('#horas').on('input', calcularMonto);
+      });
+    </script>
   </body>
 </html>
