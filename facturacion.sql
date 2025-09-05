@@ -36,6 +36,7 @@ CREATE TABLE `clientes` (
   `email` varchar(100) DEFAULT NULL,
   `precio_base` decimal(10,2) DEFAULT NULL,
   `fecha_base` date DEFAULT NULL,
+  `precio_actual` decimal(10,2) DEFAULT NULL,
   `id_usuario` int(11) DEFAULT NULL,
   `fecha_hora_alta` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
