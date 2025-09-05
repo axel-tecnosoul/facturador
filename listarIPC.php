@@ -45,7 +45,7 @@ if(empty($_SESSION['user'])){
                         <tbody><?php
                           include 'database.php';
                           $pdo = Database::connect();
-                          $sql = " SELECT id, anio, mes, porcentaje FROM ipc_historial ORDER BY anio DESC, mes DESC";
+                          $sql = " SELECT id, DATE_FORMAT(periodo,'%Y') AS anio, DATE_FORMAT(periodo,'%m') AS mes, porcentaje FROM ipc_historial ORDER BY periodo DESC";
                           foreach ($pdo->query($sql) as $row) {?>
                             <tr>
                               <td><?=$row["id"]?></td>
