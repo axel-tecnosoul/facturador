@@ -1,13 +1,13 @@
 <?php
 session_start();
 if(empty($_SESSION['user'])){
-        header("Location: index.php");
-        die("Redirecting to index.php");
+  header("Location: index.php");
+  die("Redirecting to index.php");
 }?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
-          <?php include('head_tables.php');?>
+    <?php include('head_tables.php');?>
   </head>
   <body class="light-only">
     <!-- page-wrapper Start-->
@@ -46,16 +46,16 @@ if(empty($_SESSION['user'])){
                           include 'database.php';
                           $pdo = Database::connect();
                           $sql = " SELECT id, anio, mes, porcentaje FROM ipc_historial ORDER BY anio DESC, mes DESC";
-                          foreach ($pdo->query($sql) as $row) {
-                            echo '<tr>';
-                            echo '<td>'. $row["id"] . '</td>';
-                            echo '<td>'. $row["anio"] . '</td>';
-                            echo '<td>'. $row["mes"] . '</td>';
-                            echo '<td>'. $row["porcentaje"] . '</td>';
-                            echo '<td>';
-                            echo '<a href="nuevoIPC.php?id='.$row["id"].'"><img src="img/icon_modificar.png" width="24" height="25" border="0" alt="Modificar" title="Modificar"></a>';
-                            echo '</td>';
-                            echo '</tr>';
+                          foreach ($pdo->query($sql) as $row) {?>
+                            <tr>
+                              <td><?=$row["id"]?></td>
+                              <td><?=$row["anio"]?></td>
+                              <td><?=$row["mes"]?></td>
+                              <td><?=$row["porcentaje"]?></td>
+                              <td>
+                                <a href="nuevoIPC.php?id=<?=$row["id"]?>"><img src="img/icon_modificar.png" width="24" height="25" border="0" alt="Modificar" title="Modificar"></a>
+                              </td>
+                            </tr><?php
                           }
                           Database::disconnect();?>
                         </tbody>
@@ -106,5 +106,55 @@ if(empty($_SESSION['user'])){
     <script src="assets/js/datatable/datatable-extension/dataTables.rowReorder.min.js"></script>
     <script src="assets/js/datatable/datatable-extension/dataTables.scroller.min.js"></script>
     <script src="assets/js/datatable/datatable-extension/custom.js"></script>
+
+    <script>
+      var table=$('#dataTables-example666')
+
+      $(document).ready(function() {
+
+        $(document).on("click",".btnEliminar",function(){
+          console.log(this);
+          $("#btnEliminarCliente").attr("href","eliminarCliente.php?id="+this.dataset.id);
+          console.log($("#btnEliminarCliente"));
+          $("#eliminarModal").modal("show")
+        })
+
+        //getClientees();
+        $(".filtraTabla").on("change",function(){
+          table.DataTable().ajax.reload(); // Se vuelve a cargar los datos del servidor sin recargar la página
+        });
+
+        table.DataTable({
+          //stateSave: true,
+          processing: true,
+          responsive: true,
+          language: {
+            "decimal": "",
+            "emptyTable": "No hay información",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ Registros",
+            "infoEmpty": "Mostrando 0 to 0 of 0 Registros",
+            "infoFiltered": "(Filtrado de _MAX_ total registros)",
+            "infoPostFix": "",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ Registros",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "Buscar:",
+            "zeroRecords": "No hay resultados",
+            "paginate": {
+                "first": "Primero",
+                "last": "Ultimo",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
+          },
+          drawCallback: function(settings, json){
+            $('[title]').tooltip();
+          }
+        });
+      })
+		</script>
+		<script src="https://cdn.datatables.net/plug-ins/1.10.15/i18n/Spanish.json"></script>
+    <!-- Plugin used-->
   </body>
 </html>
