@@ -11,60 +11,88 @@ if ( !empty($_POST)) {
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-  $cotizacion_usd=$_POST['cotizacion_usd'];
-  $monto_pesos=$_POST['monto_pesos'];
-  $fecha_cobro=$_POST['fecha_cobro'];
-  if($fecha_cobro==""){
-    $fecha_cobro=null;
-  }
+  try{
+    $cotizacion_usd=filter_var($_POST['cotizacion_usd'],FILTER_VALIDATE_FLOAT);
+    $monto_pesos=filter_var($_POST['monto_pesos'],FILTER_VALIDATE_FLOAT);
+    $id_cliente=filter_var($_POST['id_cliente'],FILTER_VALIDATE_INT);
+    $fecha_cobro=$_POST['fecha_cobro'];
+    if($fecha_cobro==""){
+      $fecha_cobro=null;
+    }
 
-  $monto_dolares=0;
-  if($cotizacion_usd>0){
-    $monto_dolares=$monto_pesos/$cotizacion_usd;
-  }
+    $monto_dolares=0;
+    if($cotizacion_usd>0){
+      $monto_dolares=$monto_pesos/$cotizacion_usd;
+    }
 
-  $pdo->beginTransaction();
-  $idFactura=null;
+    $pdo->beginTransaction();
+    $idFactura=null;
 
-  if(isset($_POST['generar_factura'])){
-    $totalFactura=0;
-    if(isset($_POST['items'])){
-      foreach($_POST['items'] as $item){
-        $totalFactura+=floatval($item['precio'])*intval($item['cantidad']);
+    if(isset($_POST['generar_factura'])){
+      $totalFactura=0;
+      $itemsSan=array();
+      if(isset($_POST['items'])){
+        foreach($_POST['items'] as $item){
+          $desc=trim($item['descripcion']);
+          $precio=filter_var($item['precio'],FILTER_VALIDATE_FLOAT);
+          $cantidad=filter_var($item['cantidad'],FILTER_VALIDATE_INT);
+          if($desc==='' || $precio===false || $cantidad===false || $cantidad<1){
+            $pdo->rollBack();
+            error_log("Item inválido en nuevoCobro\n",3,'save_log.txt');
+            die('Datos de ítems inválidos');
+          }
+          $desc=htmlspecialchars($desc,ENT_QUOTES,'UTF-8');
+          $itemsSan[]=['descripcion'=>$desc,'precio'=>$precio,'cantidad'=>$cantidad];
+          $totalFactura+=floatval($precio)*intval($cantidad);
+        }
+      }
+      $postedTotal=filter_var($_POST['total_factura'],FILTER_VALIDATE_FLOAT);
+      if($postedTotal===false || abs($totalFactura-$postedTotal)>0.01){
+        $pdo->rollBack();
+        error_log("Inconsistencia en total de factura\n",3,'save_log.txt');
+        die('Total de factura inconsistente');
+      }
+      $sqlF="INSERT INTO facturas (id_cliente,fecha,total) VALUES (?,?,?)";
+      $q=$pdo->prepare($sqlF);
+      $q->execute(array($id_cliente,$_POST['fecha_factura'],$totalFactura));
+      $idFactura=$pdo->lastInsertId();
+
+      if(!empty($itemsSan)){
+        $sqlD="INSERT INTO factura_detalle (id_factura,descripcion,precio,cantidad) VALUES (?,?,?,?)";
+        $q=$pdo->prepare($sqlD);
+        foreach($itemsSan as $item){
+          $q->execute(array($idFactura,$item['descripcion'],$item['precio'],$item['cantidad']));
+        }
       }
     }
-    $sqlF="INSERT INTO facturas (id_cliente,fecha,total) VALUES (?,?,?)";
-    $q=$pdo->prepare($sqlF);
-    $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$totalFactura));
-    $idFactura=$pdo->lastInsertId();
 
-    if(isset($_POST['items'])){
-      $sqlD="INSERT INTO factura_detalle (id_factura,descripcion,precio,cantidad) VALUES (?,?,?,?)";
-      $q=$pdo->prepare($sqlD);
-      foreach($_POST['items'] as $item){
-        $q->execute(array($idFactura,$item['descripcion'],$item['precio'],$item['cantidad']));
+    $detalle=htmlspecialchars($_POST['detalle'],ENT_QUOTES,'UTF-8');
+    $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario,id_factura) VALUES (?,?,?,?,?,?,?,?,?)";
+    $q = $pdo->prepare($sql);
+    $q->execute(array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$_SESSION["user"]['id'],$idFactura));
+
+    $pdo->commit();
+
+    Database::disconnect();
+
+    if($idFactura){
+      require_once 'informarFacturaARCA.php';
+      $resultadoArca = informarFacturaARCA($idFactura);
+      if(stripos($resultadoArca,'Error') !== false){
+        error_log("Error comunicación ARCA: $resultadoArca\n",3,'save_log.txt');
+        echo $resultadoArca;
+        exit;
       }
     }
-  }
 
-  $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario,id_factura) VALUES (?,?,?,?,?,?,?,?,?)";
-  $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$_POST['cotizacion_usd'],$monto_dolares,$_POST['detalle'],$_SESSION["user"]['id'],$idFactura));
-
-  $pdo->commit();
-
-  Database::disconnect();
-
-  if($idFactura){
-    require_once 'informarFacturaARCA.php';
-    $resultadoArca = informarFacturaARCA($idFactura);
-    if(stripos($resultadoArca,'Error') !== false){
-      echo $resultadoArca;
-      exit;
+    header("Location: listarCobros.php");
+  }catch(Exception $e){
+    if($pdo->inTransaction()){
+      $pdo->rollBack();
     }
+    error_log("Error inserción cobro: ".$e->getMessage()."\n",3,'save_log.txt');
+    die('Error al procesar el cobro');
   }
-
-  header("Location: listarCobros.php");
 }
 $hoy=date("Y-m-d")?>
 <!DOCTYPE html>
