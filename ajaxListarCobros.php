@@ -26,7 +26,7 @@ if(!empty($_GET["id_cliente"]&& $_GET["id_cliente"] != 0)) {
 
 //Ventas
 $pdo = Database::connect();
-$sql = "SELECT co.id AS id_cobro,co.fecha_factura,date_format(co.fecha_factura,'%d/%m/%Y') AS fecha_factura_formatted,date_format(co.fecha_cobro,'%d/%m/%Y') AS fecha_cobro_formatted,fecha_cobro,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,co.detalle,cl.razon_social,co.monto_pesos,SUM(pc.monto) AS total_pagado,co.monto_dolares,co.cotizacion_usd FROM cobros co INNER JOIN clientes cl ON co.id_cliente=cl.id LEFT JOIN pagos_colaboradores pc ON pc.id_cobro=co.id WHERE 1 $filtroDesde $filtroHasta $filtroCliente GROUP BY co.id";
+$sql = "SELECT co.id AS id_cobro,co.id_factura,co.fecha_factura,date_format(co.fecha_factura,'%d/%m/%Y') AS fecha_factura_formatted,date_format(co.fecha_cobro,'%d/%m/%Y') AS fecha_cobro_formatted,fecha_cobro,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,co.detalle,cl.razon_social,co.monto_pesos,SUM(pc.monto) AS total_pagado,co.monto_dolares,co.cotizacion_usd FROM cobros co INNER JOIN clientes cl ON co.id_cliente=cl.id LEFT JOIN pagos_colaboradores pc ON pc.id_cobro=co.id WHERE 1 $filtroDesde $filtroHasta $filtroCliente GROUP BY co.id";
 //echo $sql;
 foreach ($pdo->query($sql) as $row) {
 
@@ -37,6 +37,10 @@ foreach ($pdo->query($sql) as $row) {
   $btnVer="";
   //$btnVer='<a href="verCobro.php?id='.$row["id_cobro"].'"><img src="img/eye.png" width="30" border="0" alt="Ver Cobro" title="Ver Operaciones"></a>';
   $btnNuevoPagoColaborador=' <a href="nuevoPagoColaborador.php?id='.$row["id_cobro"].'"><img src="img/dolar.png" width="30" border="0" alt="Ver Cobro" title="Nuevo Pago a Colaborador"></a>';
+  $btnFactura="";
+  if(!empty($row["id_factura"])){
+    $btnFactura=' <a href="Facturas/facturaCobro.php?id='.$row["id_factura"].'" target="_blank"><img src="img/pdf.png" width="24" height="25" border="0" alt="Factura" title="Descargar factura"></a>';
+  }
   
   $monto_pesos=$row["monto_pesos"];
   $total_pagado=$row["total_pagado"];
@@ -70,7 +74,7 @@ foreach ($pdo->query($sql) as $row) {
     "monto_dolares"=>$monto_dolares,
     "cotizacion_usd"=>$cotizacion_usd,
     "rentabilidad_usd"=>$rentabilidad_usd,
-    "acciones" => $btnModificar.$btnEliminar.$btnVer.$btnNuevoPagoColaborador
+    "acciones" => $btnModificar.$btnEliminar.$btnVer.$btnNuevoPagoColaborador.$btnFactura
   ];
 }
 
