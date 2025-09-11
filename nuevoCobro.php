@@ -198,12 +198,12 @@ $hoy=date("Y-m-d")?>
                             <div id="factura_section" style="display:none;">
                               <table class="table table-sm">
                                 <thead>
-                                  <tr><th>Descripción</th><th>Precio</th><th>Cantidad</th><th></th></tr>
+                                  <tr><th>Descripción</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr>
                                 </thead>
                                 <tbody id="detalles"></tbody>
                                 <tfoot>
                                   <tr>
-                                    <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
                                     <td id="total_factura_display">0</td>
                                   </tr>
                                 </tfoot>
@@ -255,11 +255,15 @@ $hoy=date("Y-m-d")?>
       <script src="assets/js/select2/select2-custom.js"></script>
       <script>
         $(function(){
+          function formatNumber(num){
+            return num.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+          }
           function addRow(){
             var row='<tr>'+
               '<td><input type="text" name="items[][descripcion]" class="form-control" required></td>'+
               '<td><input type="number" step="0.01" name="items[][precio]" class="form-control precio" required></td>'+
               '<td><input type="number" name="items[][cantidad]" class="form-control cantidad" value="1" required></td>'+
+              '<td class="subtotal">0</td>'+
               '<td><button type="button" class="btn btn-danger btn-sm remove">X</button></td>'+
               '</tr>';
             $('#detalles').append(row);
@@ -270,12 +274,14 @@ $hoy=date("Y-m-d")?>
             $('#detalles tr').each(function(){
               var p=parseFloat($(this).find('.precio').val())||0;
               var c=parseFloat($(this).find('.cantidad').val())||0;
-              total+=p*c;
+              var st=p*c;
+              total+=st;
+              $(this).find('.subtotal').text(formatNumber(st));
             });
-            $('#total_factura_display').text(total.toFixed(2));
+            $('#total_factura_display').text(formatNumber(total));
             $('#total_factura').val(total.toFixed(2));
-            if($('#generar_factura').is(':checked')){
-              $('input[name="monto_pesos"]').val(total.toFixed(2));
+            if($('input[name="monto_pesos"]').prop('disabled')){
+              $('input[name="monto_pesos"]').val(formatNumber(total));
             }
           }
           $('#generar_factura').on('change',function(){
@@ -306,6 +312,6 @@ $hoy=date("Y-m-d")?>
             $('#generar_factura').prop('checked', pideFactura==1).trigger('change');
           });
         });
-      </script>
-    </body>
+  </script>
+  </body>
   </html>
