@@ -99,6 +99,10 @@ if ( !empty($_POST)) {
     }
 
     $detalle=htmlspecialchars($_POST['detalle'],ENT_QUOTES,'UTF-8');
+    if (trim($detalle) === '' && !$idFactura) {
+      $pdo->rollBack();
+      error('Debe generar una factura o completar el detalle');
+    }
     $sql = "UPDATE cobros set id_cliente = ?, fecha_factura = ?, fecha_cobro = ?, monto_pesos = ?, cotizacion_usd = ?, monto_dolares = ?, detalle = ?, id_factura = ? where id = ?";
     $q = $pdo->prepare($sql);
     $q->execute(array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$idFactura,$id));
