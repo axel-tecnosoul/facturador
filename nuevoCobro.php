@@ -1,11 +1,46 @@
 <?php
 require("config.php");
+$modoDebug = 0;
+define('MODO_DEBUG', $modoDebug);
+
+function debugPost(){
+    if(MODO_DEBUG === 1){
+        echo "<pre>";
+        var_dump($_POST);
+        echo "</pre>";
+    }
+}
+
+function debugQuery($sql, $params, $stmt){
+    $stmt->execute($params);
+    $queryType = strtoupper(strtok(trim($sql), ' '));
+    $rows = null;
+    if($queryType === 'SELECT'){
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    if(MODO_DEBUG === 1){
+        echo "<pre>Consulta: $sql\nParámetros:\n";
+        var_dump($params);
+        if($queryType === 'SELECT'){
+            echo "Resultados:\n";
+            var_dump($rows);
+        }else{
+            echo "Filas afectadas: " . $stmt->rowCount() . "\n";
+        }
+        echo "</pre>";
+    }
+    if($queryType === 'SELECT'){
+        return $rows;
+    }
+    return null;
+}
 if(empty($_SESSION['user'])){
   header("Location: index.php");
-  die("Redirecting to index.php"); 
+  die("Redirecting to index.php");
 }
 require 'database.php';
 if ( !empty($_POST)) {
+  debugPost();
 
   // insert data
   $pdo = Database::connect();
@@ -54,14 +89,14 @@ if ( !empty($_POST)) {
       }
       $sqlF="INSERT INTO facturas (id_cliente,fecha,total) VALUES (?,?,?)";
       $q=$pdo->prepare($sqlF);
-      $q->execute(array($id_cliente,$_POST['fecha_factura'],$totalFactura));
+      debugQuery($sqlF, array($id_cliente,$_POST['fecha_factura'],$totalFactura), $q);
       $idFactura=$pdo->lastInsertId();
 
       if(!empty($itemsSan)){
         $sqlD="INSERT INTO factura_detalle (id_factura,descripcion,precio,cantidad) VALUES (?,?,?,?)";
         $q=$pdo->prepare($sqlD);
         foreach($itemsSan as $item){
-          $q->execute(array($idFactura,$item['descripcion'],$item['precio'],$item['cantidad']));
+          debugQuery($sqlD, array($idFactura,$item['descripcion'],$item['precio'],$item['cantidad']), $q);
         }
       }
       if($monto_pesos===null || $monto_pesos===false){
@@ -81,7 +116,7 @@ if ( !empty($_POST)) {
     }
     $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario,id_factura) VALUES (?,?,?,?,?,?,?,?,?)";
     $q = $pdo->prepare($sql);
-    $q->execute(array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$_SESSION["user"]['id'],$idFactura));
+    debugQuery($sql, array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$_SESSION["user"]['id'],$idFactura), $q);
 
     $pdo->commit();
 
@@ -174,7 +209,9 @@ $hoy=date("Y-m-d")?>
                                 <option value="">Seleccione...</option><?php
                                 $pdo = Database::connect();
                                 $sql = "SELECT c.id AS id_cliente,c.razon_social,c.pide_factura FROM clientes c";
-                                foreach ($pdo->query($sql) as $row) {?>
+                                $stmt = $pdo->prepare($sql);
+                                $clientes = debugQuery($sql, array(), $stmt);
+                                foreach ($clientes as $row) {?>
                                   <option value="<?=$row["id_cliente"]?>" data-pide-factura="<?=$row["pide_factura"]?>"><?=$row["razon_social"]?></option><?php
                                 }
                                 Database::disconnect();?>

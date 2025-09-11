@@ -1,8 +1,42 @@
 <?php
 require("config.php");
+$modoDebug = 0;
+define('MODO_DEBUG', $modoDebug);
+
+function debugPost(){
+    if(MODO_DEBUG === 1){
+        echo "<pre>";
+        var_dump($_POST);
+        echo "</pre>";
+    }
+}
+
+function debugQuery($sql, $params, $stmt){
+    $stmt->execute($params);
+    $queryType = strtoupper(strtok(trim($sql), ' '));
+    $rows = null;
+    if($queryType === 'SELECT'){
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    if(MODO_DEBUG === 1){
+        echo "<pre>Consulta: $sql\nParámetros:\n";
+        var_dump($params);
+        if($queryType === 'SELECT'){
+            echo "Resultados:\n";
+            var_dump($rows);
+        }else{
+            echo "Filas afectadas: " . $stmt->rowCount() . "\n";
+        }
+        echo "</pre>";
+    }
+    if($queryType === 'SELECT'){
+        return $rows;
+    }
+    return null;
+}
 if(empty($_SESSION['user'])){
   header("Location: index.php");
-  die("Redirecting to index.php"); 
+  die("Redirecting to index.php");
 }
 require 'database.php';
 if (!empty($_GET['id'])) {
@@ -13,6 +47,7 @@ if ( null==$id ) {
 }
 
 if ( !empty($_POST)) {
+  debugPost();
 
   // insert data
   $pdo = Database::connect();
@@ -22,8 +57,8 @@ if ( !empty($_POST)) {
     // obtener factura actual
     $sqlAct = "SELECT id_factura FROM cobros WHERE id = ?";
     $qAct = $pdo->prepare($sqlAct);
-    $qAct->execute(array($id));
-    $rowAct = $qAct->fetch(PDO::FETCH_ASSOC);
+    $resultAct = debugQuery($sqlAct, array($id), $qAct);
+    $rowAct = $resultAct ? $resultAct[0] : null;
     $idFacturaActual = $rowAct ? $rowAct['id_factura'] : null;
 
     $cotizacion_usd=filter_var($_POST['cotizacion_usd'],FILTER_VALIDATE_FLOAT);
@@ -69,20 +104,22 @@ if ( !empty($_POST)) {
       if($idFacturaActual){
         $sqlF="UPDATE facturas SET id_cliente = ?, fecha = ?, total = ? WHERE id = ?";
         $qF=$pdo->prepare($sqlF);
-        $qF->execute(array($id_cliente,$_POST['fecha_factura'],$totalFactura,$idFacturaActual));
+        debugQuery($sqlF, array($id_cliente,$_POST['fecha_factura'],$totalFactura,$idFacturaActual), $qF);
         $idFactura=$idFacturaActual;
-        $pdo->prepare("DELETE FROM factura_detalle WHERE id_factura = ?")->execute(array($idFactura));
+        $sqlDelDet="DELETE FROM factura_detalle WHERE id_factura = ?";
+        $stmtDelDet=$pdo->prepare($sqlDelDet);
+        debugQuery($sqlDelDet, array($idFactura), $stmtDelDet);
       }else{
         $sqlF="INSERT INTO facturas (id_cliente,fecha,total) VALUES (?,?,?)";
         $qF=$pdo->prepare($sqlF);
-        $qF->execute(array($id_cliente,$_POST['fecha_factura'],$totalFactura));
+        debugQuery($sqlF, array($id_cliente,$_POST['fecha_factura'],$totalFactura), $qF);
         $idFactura=$pdo->lastInsertId();
       }
       if(!empty($itemsSan)){
         $sqlD="INSERT INTO factura_detalle (id_factura,descripcion,precio,cantidad) VALUES (?,?,?,?)";
         $qD=$pdo->prepare($sqlD);
         foreach($itemsSan as $it){
-          $qD->execute(array($idFactura,$it['descripcion'],$it['precio'],$it['cantidad']));
+          debugQuery($sqlD, array($idFactura,$it['descripcion'],$it['precio'],$it['cantidad']), $qD);
         }
       }
       if($monto_pesos===null || $monto_pesos===false){
@@ -90,8 +127,12 @@ if ( !empty($_POST)) {
       }
     }else{
       if($idFacturaActual){
-        $pdo->prepare("DELETE FROM factura_detalle WHERE id_factura = ?")->execute(array($idFacturaActual));
-        $pdo->prepare("DELETE FROM facturas WHERE id = ?")->execute(array($idFacturaActual));
+        $sqlDelDet="DELETE FROM factura_detalle WHERE id_factura = ?";
+        $stmtDelDet=$pdo->prepare($sqlDelDet);
+        debugQuery($sqlDelDet, array($idFacturaActual), $stmtDelDet);
+        $sqlDelFact="DELETE FROM facturas WHERE id = ?";
+        $stmtDelFact=$pdo->prepare($sqlDelFact);
+        debugQuery($sqlDelFact, array($idFacturaActual), $stmtDelFact);
       }
     }
 
@@ -107,7 +148,7 @@ if ( !empty($_POST)) {
     }
     $sql = "UPDATE cobros set id_cliente = ?, fecha_factura = ?, fecha_cobro = ?, monto_pesos = ?, cotizacion_usd = ?, monto_dolares = ?, detalle = ?, id_factura = ? where id = ?";
     $q = $pdo->prepare($sql);
-    $q->execute(array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$idFactura,$id));
+    debugQuery($sql, array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$idFactura,$id), $q);
 
     $pdo->commit();
 
@@ -137,16 +178,16 @@ if ( !empty($_POST)) {
 
   $sql = "SELECT co.id AS id_cobro,co.fecha_factura,co.fecha_cobro,co.detalle,co.monto_pesos,co.cotizacion_usd,co.id_cliente,co.id_factura FROM cobros co WHERE co.id = ? ";
   $q = $pdo->prepare($sql);
-  $q->execute(array($id));
-  $data = $q->fetch(PDO::FETCH_ASSOC);
+  $dataRows = debugQuery($sql, array($id), $q);
+  $data = $dataRows ? $dataRows[0] : null;
 
   $items=array();
   $totalFactura=0;
   if($data && $data['id_factura']){
     $sqlDet="SELECT descripcion,precio,cantidad FROM factura_detalle WHERE id_factura = ?";
     $qDet=$pdo->prepare($sqlDet);
-    $qDet->execute(array($data['id_factura']));
-    while($rowDet=$qDet->fetch(PDO::FETCH_ASSOC)){
+    $detRows = debugQuery($sqlDet, array($data['id_factura']), $qDet);
+    foreach($detRows as $rowDet){
       $items[]=$rowDet;
       $totalFactura+=floatval($rowDet['precio'])*intval($rowDet['cantidad']);
     }
@@ -223,7 +264,9 @@ if ( !empty($_POST)) {
                                 <option value="">Seleccione...</option><?php
                                 $pdo = Database::connect();
                                 $sql = "SELECT c.id AS id_cliente,c.razon_social,c.pide_factura FROM clientes c";
-                                foreach ($pdo->query($sql) as $row) {
+                                $stmt = $pdo->prepare($sql);
+                                $clientes = debugQuery($sql, array(), $stmt);
+                                foreach ($clientes as $row) {
                                   $selected="";
                                   if($data["id_cliente"]==$row["id_cliente"]){
                                     $selected=" selected";
