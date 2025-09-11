@@ -73,6 +73,10 @@ if ( !empty($_POST)) {
     }
 
     $detalle=htmlspecialchars($_POST['detalle'],ENT_QUOTES,'UTF-8');
+    if (trim($detalle) === '' && !$idFactura) {
+      $pdo->rollBack();
+      error('Debe generar una factura o completar el detalle');
+    }
     $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario,id_factura) VALUES (?,?,?,?,?,?,?,?,?)";
     $q = $pdo->prepare($sql);
     $q->execute(array($id_cliente,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$_SESSION["user"]['id'],$idFactura));
