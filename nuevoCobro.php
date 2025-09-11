@@ -163,9 +163,9 @@ $hoy=date("Y-m-d")?>
                               <select name="id_cliente" class="form-control form-control-sm filtraTabla selectpicker multiselect w-100" data-live-search="true" required>
                                 <option value="">Seleccione...</option><?php
                                 $pdo = Database::connect();
-                                $sql = "SELECT c.id AS id_cliente,c.razon_social FROM clientes c";
+                                $sql = "SELECT c.id AS id_cliente,c.razon_social,c.pide_factura FROM clientes c";
                                 foreach ($pdo->query($sql) as $row) {?>
-                                  <option value="<?=$row["id_cliente"]?>"><?=$row["razon_social"]?></option><?php
+                                  <option value="<?=$row["id_cliente"]?>" data-pide-factura="<?=$row["pide_factura"]?>"><?=$row["razon_social"]?></option><?php
                                 }
                                 Database::disconnect();?>
                               </select>
@@ -292,6 +292,10 @@ $hoy=date("Y-m-d")?>
           });
           $('#detalles').on('input','.precio, .cantidad',function(){
             calcTotal();
+          });
+          $('select[name="id_cliente"]').on('changed.bs.select', function(){
+            var pideFactura = $('option:selected', this).data('pide-factura');
+            $('#generar_factura').prop('checked', pideFactura==1).trigger('change');
           });
         });
       </script>
