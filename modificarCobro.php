@@ -27,16 +27,14 @@ if ( !empty($_POST)) {
     $idFacturaActual = $rowAct ? $rowAct['id_factura'] : null;
 
     $cotizacion_usd=filter_var($_POST['cotizacion_usd'],FILTER_VALIDATE_FLOAT);
-    $monto_pesos=filter_var($_POST['monto_pesos'],FILTER_VALIDATE_FLOAT);
+    $monto_pesos=null;
+    if(isset($_POST['monto_pesos'])){
+      $monto_pesos=filter_var($_POST['monto_pesos'],FILTER_VALIDATE_FLOAT);
+    }
     $id_cliente=filter_var($_POST['id_cliente'],FILTER_VALIDATE_INT);
     $fecha_cobro=$_POST['fecha_cobro'];
     if($fecha_cobro==""){
       $fecha_cobro=null;
-    }
-
-    $monto_dolares=0;
-    if($cotizacion_usd>0){
-      $monto_dolares=$monto_pesos/$cotizacion_usd;
     }
 
     $pdo->beginTransaction();
@@ -85,12 +83,19 @@ if ( !empty($_POST)) {
           $qD->execute(array($idFactura,$it['descripcion'],$it['precio'],$it['cantidad']));
         }
       }
-      $monto_pesos=$totalFactura;
+      if($monto_pesos===null || $monto_pesos===false){
+        $monto_pesos=$totalFactura;
+      }
     }else{
       if($idFacturaActual){
         $pdo->prepare("DELETE FROM factura_detalle WHERE id_factura = ?")->execute(array($idFacturaActual));
         $pdo->prepare("DELETE FROM facturas WHERE id = ?")->execute(array($idFacturaActual));
       }
+    }
+
+    $monto_dolares=0;
+    if($cotizacion_usd>0 && $monto_pesos!==null && $monto_pesos!==false){
+      $monto_dolares=$monto_pesos/$cotizacion_usd;
     }
 
     $detalle=htmlspecialchars($_POST['detalle'],ENT_QUOTES,'UTF-8');
