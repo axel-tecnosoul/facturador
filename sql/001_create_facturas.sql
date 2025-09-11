@@ -3,6 +3,10 @@ CREATE TABLE facturas (
   id_cliente INT NOT NULL,
   fecha DATE,
   total DECIMAL(10,2) NOT NULL,
+  estado VARCHAR(1) DEFAULT NULL,
+  cae VARCHAR(50) DEFAULT NULL,
+  fecha_vencimiento_cae DATE DEFAULT NULL,
+  numero_comprobante VARCHAR(50) DEFAULT NULL,
   FOREIGN KEY (id_cliente) REFERENCES clientes(id)
 );
 
