@@ -261,14 +261,16 @@ $hoy=date("Y-m-d")?>
       <script src="assets/js/select2/select2-custom.js"></script>
       <script>
         $(function(){
+          let itemIndex = $('#detalles tr').length;
           function formatNumber(num){
             return num.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
           }
           function addRow(){
-            var row='<tr>'+
-              '<td><input type="text" name="items[][descripcion]" class="form-control" required></td>'+
-              '<td><input type="number" step="0.01" name="items[][precio]" class="form-control precio" required></td>'+
-              '<td><input type="number" name="items[][cantidad]" class="form-control cantidad" value="1" required></td>'+
+            var idx = itemIndex++;
+            var row='<tr data-index="'+idx+'">'+
+              '<td><input type="text" name="items['+idx+'][descripcion]" class="form-control" required></td>'+
+              '<td><input type="number" step="0.01" name="items['+idx+'][precio]" class="form-control precio" required></td>'+
+              '<td><input type="number" name="items['+idx+'][cantidad]" class="form-control cantidad" value="1" required></td>'+
               '<td class="subtotal">0</td>'+
               '<td><button type="button" class="btn btn-danger btn-sm remove">X</button></td>'+
               '</tr>';
@@ -316,11 +318,12 @@ $hoy=date("Y-m-d")?>
           });
           $('form.theme-form').on('submit',function(){
             $('#detalles tr').each(function(){
-              if($(this).find('input[name$="[precio]"]').length===0){
-                $('<input>').attr({type:'hidden',name:'items[][precio]',value:'0'}).appendTo($(this));
+              var idx=$(this).data('index');
+              if($(this).find('input[name="items['+idx+'][precio]"]').length===0){
+                $('<input>').attr({type:'hidden',name:'items['+idx+'][precio]',value:'0'}).appendTo($(this));
               }
-              if($(this).find('input[name$="[cantidad]"]').length===0){
-                $('<input>').attr({type:'hidden',name:'items[][cantidad]',value:'1'}).appendTo($(this));
+              if($(this).find('input[name="items['+idx+'][cantidad]"]').length===0){
+                $('<input>').attr({type:'hidden',name:'items['+idx+'][cantidad]',value:'1'}).appendTo($(this));
               }
             });
           });
