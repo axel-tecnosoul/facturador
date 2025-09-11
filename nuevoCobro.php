@@ -6,7 +6,7 @@ if(empty($_SESSION['user'])){
 }
 require 'database.php';
 if ( !empty($_POST)) {
-  
+
   // insert data
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -18,21 +18,43 @@ if ( !empty($_POST)) {
     $fecha_cobro=null;
   }
 
-  /*$sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,monto_dolares,detalle,id_usuario) VALUES (?,?,?,?,?,?,?)";
-  $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$_POST['monto_pesos'],$_POST['monto_dolares'],$_POST['detalle'],$_SESSION["user"]['id']));*/
-
   $monto_dolares=0;
   if($cotizacion_usd>0){
     $monto_dolares=$monto_pesos/$cotizacion_usd;
   }
 
-  $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario) VALUES (?,?,?,?,?,?,?,?)";
+  $pdo->beginTransaction();
+  $idFactura=null;
+
+  if(isset($_POST['generar_factura'])){
+    $totalFactura=0;
+    if(isset($_POST['items'])){
+      foreach($_POST['items'] as $item){
+        $totalFactura+=floatval($item['precio'])*intval($item['cantidad']);
+      }
+    }
+    $sqlF="INSERT INTO facturas (id_cliente,fecha,total) VALUES (?,?,?)";
+    $q=$pdo->prepare($sqlF);
+    $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$totalFactura));
+    $idFactura=$pdo->lastInsertId();
+
+    if(isset($_POST['items'])){
+      $sqlD="INSERT INTO factura_detalle (id_factura,descripcion,precio,cantidad) VALUES (?,?,?,?)";
+      $q=$pdo->prepare($sqlD);
+      foreach($_POST['items'] as $item){
+        $q->execute(array($idFactura,$item['descripcion'],$item['precio'],$item['cantidad']));
+      }
+    }
+  }
+
+  $sql = "INSERT INTO cobros (id_cliente,fecha_factura,fecha_cobro,monto_pesos,cotizacion_usd,monto_dolares,detalle,id_usuario,id_factura) VALUES (?,?,?,?,?,?,?,?,?)";
   $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$_POST['cotizacion_usd'],$monto_dolares,$_POST['detalle'],$_SESSION["user"]['id']));
-  
+  $q->execute(array($_POST['id_cliente'],$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$_POST['cotizacion_usd'],$monto_dolares,$_POST['detalle'],$_SESSION["user"]['id'],$idFactura));
+
+  $pdo->commit();
+
   Database::disconnect();
-  
+
   header("Location: listarCobros.php");
 }
 $hoy=date("Y-m-d")?>
@@ -128,10 +150,30 @@ $hoy=date("Y-m-d")?>
                             <label class="col-sm-3 col-form-label">Cotizacion USD</label>
                             <div class="col-sm-9"><input name="cotizacion_usd" type="number" maxlength="99" class="form-control" value=""></div>
                           </div>
-                          <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Detalle</label>
-                            <div class="col-sm-9"><input name="detalle" type="text" maxlength="99" class="form-control" value=""></div>
-                          </div>
+                            <div class="form-group row">
+                              <label class="col-sm-3 col-form-label">Detalle</label>
+                              <div class="col-sm-9"><input name="detalle" type="text" maxlength="99" class="form-control" value=""></div>
+                            </div>
+                            <div class="form-group row">
+                              <label class="col-sm-3 col-form-label">Generar factura</label>
+                              <div class="col-sm-9"><input type="checkbox" name="generar_factura" id="generar_factura"></div>
+                            </div>
+                            <div id="factura_section" style="display:none;">
+                              <table class="table table-sm">
+                                <thead>
+                                  <tr><th>Descripción</th><th>Precio</th><th>Cantidad</th><th></th></tr>
+                                </thead>
+                                <tbody id="detalles"></tbody>
+                                <tfoot>
+                                  <tr>
+                                    <td colspan="3" class="text-right"><strong>Total:</strong></td>
+                                    <td id="total_factura_display">0</td>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                              <button type="button" class="btn btn-secondary btn-sm" id="add_item">Agregar ítem</button>
+                              <input type="hidden" name="total_factura" id="total_factura" value="0">
+                            </div>
                         </div>
                       </div>
                     </div>
@@ -173,6 +215,48 @@ $hoy=date("Y-m-d")?>
     <script src="assets/js/script.js"></script>
     <!-- Plugin used-->
 	  <script src="assets/js/select2/select2.full.min.js"></script>
-    <script src="assets/js/select2/select2-custom.js"></script>
-  </body>
-</html>
+      <script src="assets/js/select2/select2-custom.js"></script>
+      <script>
+        $(function(){
+          function addRow(){
+            var row='<tr>'+
+              '<td><input type="text" name="items[][descripcion]" class="form-control" required></td>'+
+              '<td><input type="number" step="0.01" name="items[][precio]" class="form-control precio" required></td>'+
+              '<td><input type="number" name="items[][cantidad]" class="form-control cantidad" value="1" required></td>'+
+              '<td><button type="button" class="btn btn-danger btn-sm remove">X</button></td>'+
+              '</tr>';
+            $('#detalles').append(row);
+            calcTotal();
+          }
+          function calcTotal(){
+            var total=0;
+            $('#detalles tr').each(function(){
+              var p=parseFloat($(this).find('.precio').val())||0;
+              var c=parseFloat($(this).find('.cantidad').val())||0;
+              total+=p*c;
+            });
+            $('#total_factura_display').text(total.toFixed(2));
+            $('#total_factura').val(total.toFixed(2));
+          }
+          $('#generar_factura').on('change',function(){
+            if($(this).is(':checked')){
+              $('#factura_section').show();
+              if($('#detalles tr').length===0){addRow();}
+            }else{
+              $('#factura_section').hide();
+            }
+          });
+          $('#add_item').on('click',function(){
+            addRow();
+          });
+          $('#detalles').on('click','.remove',function(){
+            $(this).closest('tr').remove();
+            calcTotal();
+          });
+          $('#detalles').on('input','.precio, .cantidad',function(){
+            calcTotal();
+          });
+        });
+      </script>
+    </body>
+  </html>
