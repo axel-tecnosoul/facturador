@@ -11,9 +11,10 @@ if ( !empty($_POST)) {
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   
-  $sql = "INSERT INTO clientes (razon_social,cuit,direccion,telefono,email,id_usuario) VALUES (?,?,?,?,?,?)";
+  $sql = "INSERT INTO clientes (razon_social,cuit,direccion,telefono,email,pide_factura,id_usuario) VALUES (?,?,?,?,?,?,?)";
   $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['razon_social'],$_POST['cuit'],$_POST['direccion'],$_POST['telefono'],$_POST['email'],$_SESSION["user"]['id']));
+  $pideFactura = isset($_POST['pide_factura']) ? 1 : 0;
+  $q->execute(array($_POST['razon_social'],$_POST['cuit'],$_POST['direccion'],$_POST['telefono'],$_POST['email'],$pideFactura,$_SESSION["user"]['id']));
   
   Database::disconnect();
   
@@ -92,6 +93,12 @@ if ( !empty($_POST)) {
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">E-mail</label>
                             <div class="col-sm-9"><input name="email" type="text" maxlength="99" class="form-control" value=""></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Pide factura</label>
+                            <div class="col-sm-9">
+                              <input name="pide_factura" type="checkbox" value="1">
+                            </div>
                           </div>
                         </div>
                       </div>

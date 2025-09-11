@@ -21,9 +21,10 @@ if ( !empty($_POST)) {
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   
-  $sql = "UPDATE clientes set razon_social = ?, cuit = ?, email = ?, telefono = ?, direccion = ? where id = ?";
+  $sql = "UPDATE clientes set razon_social = ?, cuit = ?, email = ?, telefono = ?, direccion = ?, pide_factura = ? where id = ?";
   $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['razon_social'],$_POST['cuit'],$_POST['email'],$_POST['telefono'],$_POST['direccion'],$_GET['id']));
+  $pideFactura = isset($_POST['pide_factura']) ? 1 : 0;
+  $q->execute(array($_POST['razon_social'],$_POST['cuit'],$_POST['email'],$_POST['telefono'],$_POST['direccion'],$pideFactura,$_GET['id']));
   
   Database::disconnect();
   
@@ -33,7 +34,7 @@ if ( !empty($_POST)) {
   
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  $sql = "SELECT id, razon_social, cuit, email, telefono, direccion FROM clientes WHERE id = ? ";
+  $sql = "SELECT id, razon_social, cuit, email, telefono, direccion, pide_factura FROM clientes WHERE id = ? ";
   $q = $pdo->prepare($sql);
   $q->execute(array($id));
   $data = $q->fetch(PDO::FETCH_ASSOC);
@@ -113,6 +114,12 @@ if ( !empty($_POST)) {
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">E-mail</label>
                             <div class="col-sm-9"><input name="email" type="text" maxlength="99" class="form-control" value="<?=$data['email']?>"></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Pide factura</label>
+                            <div class="col-sm-9">
+                              <input name="pide_factura" type="checkbox" value="1" <?php if($data['pide_factura']) echo 'checked'; ?>>
+                            </div>
                           </div>
                         </div>
                       </div>
