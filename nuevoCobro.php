@@ -6,6 +6,10 @@ if(empty($_SESSION['user'])){
 }
 require 'database.php';
 if ( !empty($_POST)) {
+  $modoDebug=1;
+  if($modoDebug==1){
+    var_dump($_POST);
+  }
 
   // insert data
   $pdo = Database::connect();

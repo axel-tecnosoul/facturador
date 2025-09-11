@@ -154,3 +154,22 @@ function randomColor(){
   }
   return $str;
 }
+
+function debugQuery(PDO $pdo, string $sql, array $params): string {
+  foreach ($params as $key => $value) {
+    // PDO::quote() añade comillas y escapa caracteres especiales
+    $quoted = $pdo->quote($value);
+
+    if (is_int($key)) {
+      // marcador posicional «?»
+      $sql = preg_replace('/\?/', $quoted, $sql, 1);
+    } else {
+      // marcador nombrado: quitamos un : adicional si lo trae la clave
+      $name    = ltrim($key, ':');
+      // \b asegura que no coincida dentro de palabras más largas
+      $pattern = '/:' . preg_quote($name, '/') . '\b/';
+      $sql     = preg_replace($pattern, $quoted, $sql);
+    }
+  }
+  return $sql;
+}
