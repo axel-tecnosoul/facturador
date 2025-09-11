@@ -45,6 +45,10 @@ if ( !empty($_POST)) {
       $itemsSan=array();
       if(isset($_POST['items'])){
         foreach($_POST['items'] as $item){
+          if(!isset($item['precio'], $item['cantidad'])){
+            $pdo->rollBack();
+            die('Datos de ítems incompletos');
+          }
           $desc=trim($item['descripcion']);
           $precio=filter_var($item['precio'],FILTER_VALIDATE_FLOAT);
           $cantidad=filter_var($item['cantidad'],FILTER_VALIDATE_INT);
@@ -368,6 +372,16 @@ if ( !empty($_POST)) {
           $('select[name="id_cliente"]').on('changed.bs.select', function(){
             var pideFactura = $('option:selected', this).data('pide-factura');
             $('#generar_factura').prop('checked', pideFactura==1).trigger('change');
+          });
+          $('form.theme-form').on('submit',function(){
+            $('#detalles tr').each(function(){
+              if($(this).find('input[name$="[precio]"]').length===0){
+                $('<input>').attr({type:'hidden',name:'items[][precio]',value:'0'}).appendTo($(this));
+              }
+              if($(this).find('input[name$="[cantidad]"]').length===0){
+                $('<input>').attr({type:'hidden',name:'items[][cantidad]',value:'1'}).appendTo($(this));
+              }
+            });
           });
           $('#generar_factura').trigger('change');
         });
