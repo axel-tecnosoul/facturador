@@ -274,13 +274,21 @@ $hoy=date("Y-m-d")?>
             });
             $('#total_factura_display').text(total.toFixed(2));
             $('#total_factura').val(total.toFixed(2));
+            if($('#generar_factura').is(':checked')){
+              $('input[name="monto_pesos"]').val(total.toFixed(2));
+            }
           }
           $('#generar_factura').on('change',function(){
             if($(this).is(':checked')){
               $('#factura_section').show();
               if($('#detalles tr').length===0){addRow();}
+              calcTotal();
+              $('input[name="monto_pesos"]').prop('disabled',true);
+              $('input[name="detalle"]').val('').closest('.form-group').hide();
             }else{
               $('#factura_section').hide();
+              $('input[name="monto_pesos"]').prop('disabled',false);
+              $('input[name="detalle"]').closest('.form-group').show();
             }
           });
           $('#add_item').on('click',function(){
