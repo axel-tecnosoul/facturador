@@ -50,7 +50,6 @@ if ( !empty($_POST)) {
           $cantidad=filter_var($item['cantidad'],FILTER_VALIDATE_INT);
           if($desc==='' || $precio===false || $cantidad===false || $cantidad<1){
             $pdo->rollBack();
-            error_log("Item inválido en modificarCobro\n",3,'save_log.txt');
             die('Datos de ítems inválidos');
           }
           $desc=htmlspecialchars($desc,ENT_QUOTES,'UTF-8');
@@ -61,7 +60,6 @@ if ( !empty($_POST)) {
       $postedTotal=filter_var($_POST['total_factura'],FILTER_VALIDATE_FLOAT);
       if($postedTotal===false || abs($totalFactura-$postedTotal)>0.01){
         $pdo->rollBack();
-        error_log("Inconsistencia en total de factura en modificarCobro\n",3,'save_log.txt');
         die('Total de factura inconsistente');
       }
       if($idFacturaActual){
@@ -115,8 +113,7 @@ if ( !empty($_POST)) {
       require_once 'informarFacturaARCA.php';
       $resultadoArca = informarFacturaARCA($idFactura);
       if(stripos($resultadoArca,'Error') !== false){
-        error_log("Error comunicación ARCA: $resultadoArca\n",3,'save_log.txt');
-        echo $resultadoArca;
+        echo "Error en la comunicación con ARCA: $resultadoArca";
         exit;
       }
     }
@@ -126,8 +123,7 @@ if ( !empty($_POST)) {
     if($pdo->inTransaction()){
       $pdo->rollBack();
     }
-    error_log("Error actualización cobro: ".$e->getMessage()."\n",3,'save_log.txt');
-    die('Error al procesar el cobro');
+    die('Error al procesar el cobro: '.$e->getMessage());
   }
 
 } else {
