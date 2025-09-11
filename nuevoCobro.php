@@ -55,6 +55,15 @@ if ( !empty($_POST)) {
 
   Database::disconnect();
 
+  if($idFactura){
+    require_once 'informarFacturaARCA.php';
+    $resultadoArca = informarFacturaARCA($idFactura);
+    if(stripos($resultadoArca,'Error') !== false){
+      echo $resultadoArca;
+      exit;
+    }
+  }
+
   header("Location: listarCobros.php");
 }
 $hoy=date("Y-m-d")?>
