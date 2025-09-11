@@ -159,7 +159,7 @@ $hoy=date("Y-m-d")?>
                         <div class="col">
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">Cliente</label>
-                            <div class="col-sm-9">
+                            <div class="col-sm-3">
                               <select name="id_cliente" class="form-control form-control-sm filtraTabla selectpicker multiselect w-100" data-live-search="true" required>
                                 <option value="">Seleccione...</option><?php
                                 $pdo = Database::connect();
@@ -170,47 +170,39 @@ $hoy=date("Y-m-d")?>
                                 Database::disconnect();?>
                               </select>
                             </div>
+                            <label class="col-sm-3 col-form-label">Fecha factura</label>
+                            <div class="col-sm-3"><input name="fecha_factura" type="date" class="form-control" value="<?=$hoy?>"></div>
                           </div>
                           <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Fecha factura</label>
-                            <div class="col-sm-9"><input name="fecha_factura" type="date" class="form-control" value="<?=$hoy?>"></div>
+                            <label class="col-sm-3 col-form-label">Generar factura</label>
+                            <div class="col-sm-9"><input type="checkbox" name="generar_factura" id="generar_factura"></div>
+                          </div>
+                          <div id="factura_section">
+                            <table class="table table-sm">
+                              <thead>
+                                <tr><th>Descripción</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr>
+                              </thead>
+                              <tbody id="detalles"></tbody>
+                              <tfoot>
+                                <tr>
+                                  <td colspan="4" class="text-right"><strong>Monto factura:</strong></td>
+                                  <td><input name="monto_pesos" type="number" class="form-control" value="" required></td>
+                                </tr>
+                              </tfoot>
+                            </table>
+                            <button type="button" class="btn btn-secondary btn-sm" id="add_item">Agregar ítem</button>
+                            <input type="hidden" name="total_factura" id="total_factura" value="0">
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Detalle</label>
+                            <div class="col-sm-9"><input name="detalle" type="text" maxlength="99" class="form-control" value=""></div>
                           </div>
                           <div class="form-group row">
                             <label class="col-sm-3 col-form-label">Fecha de cobro</label>
-                            <div class="col-sm-9"><input name="fecha_cobro" type="date" class="form-control"></div>
-                          </div>
-                          <div class="form-group row">
-                            <label class="col-sm-3 col-form-label">Monto en pesos</label>
-                            <div class="col-sm-9"><input name="monto_pesos" type="number" maxlength="99" class="form-control" value="" required></div>
-                          </div>
-                          <div class="form-group row">
+                            <div class="col-sm-3"><input name="fecha_cobro" type="date" class="form-control"></div>
                             <label class="col-sm-3 col-form-label">Cotizacion USD</label>
-                            <div class="col-sm-9"><input name="cotizacion_usd" type="number" maxlength="99" class="form-control" value=""></div>
+                            <div class="col-sm-3"><input name="cotizacion_usd" type="number" maxlength="99" class="form-control" value=""></div>
                           </div>
-                            <div class="form-group row">
-                              <label class="col-sm-3 col-form-label">Detalle</label>
-                              <div class="col-sm-9"><input name="detalle" type="text" maxlength="99" class="form-control" value=""></div>
-                            </div>
-                            <div class="form-group row">
-                              <label class="col-sm-3 col-form-label">Generar factura</label>
-                              <div class="col-sm-9"><input type="checkbox" name="generar_factura" id="generar_factura"></div>
-                            </div>
-                            <div id="factura_section" style="display:none;">
-                              <table class="table table-sm">
-                                <thead>
-                                  <tr><th>Descripción</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr>
-                                </thead>
-                                <tbody id="detalles"></tbody>
-                                <tfoot>
-                                  <tr>
-                                    <td colspan="4" class="text-right"><strong>Total:</strong></td>
-                                    <td id="total_factura_display">0</td>
-                                  </tr>
-                                </tfoot>
-                              </table>
-                              <button type="button" class="btn btn-secondary btn-sm" id="add_item">Agregar ítem</button>
-                              <input type="hidden" name="total_factura" id="total_factura" value="0">
-                            </div>
                         </div>
                       </div>
                     </div>
@@ -278,7 +270,6 @@ $hoy=date("Y-m-d")?>
               total+=st;
               $(this).find('.subtotal').text(formatNumber(st));
             });
-            $('#total_factura_display').text(formatNumber(total));
             $('#total_factura').val(total.toFixed(2));
             if($('input[name="monto_pesos"]').prop('disabled')){
               $('input[name="monto_pesos"]').val(formatNumber(total));
@@ -286,13 +277,11 @@ $hoy=date("Y-m-d")?>
           }
           $('#generar_factura').on('change',function(){
             if($(this).is(':checked')){
-              $('#factura_section').show();
               if($('#detalles tr').length===0){addRow();}
               calcTotal();
               $('input[name="monto_pesos"]').prop('disabled',true);
               $('input[name="detalle"]').val('').closest('.form-group').hide();
             }else{
-              $('#factura_section').hide();
               $('input[name="monto_pesos"]').prop('disabled',false);
               $('input[name="detalle"]').closest('.form-group').show();
             }
