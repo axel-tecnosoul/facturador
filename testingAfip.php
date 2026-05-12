@@ -3,13 +3,34 @@ ini_set("display_errors",1);
 ini_set("display_startup_errors",1);
 error_reporting(E_ALL);
 
-include '../external/afip/Afip.php';
+include 'vendor/afip/Afip.php';
 include 'config_facturacion_electronica.php';//poner $homologacion=1 para facturar en modo homologacion. Retorna $aInitializeAFIP.
+
+$cuitAxel=20351290340;
+$cuitGaby=27332168970;
+$cuitFavio=20228728943;
+
+$aInitializeAFIP['CUIT']=$cuitGaby;//CUIT de la empresa que factura (11 caracteres)
+
 $afip = new Afip($aInitializeAFIP);
 $server_status = $afip->ElectronicBilling->GetServerStatus();
 
 echo 'Este es el estado del servidor:';
 var_dump($server_status);
+
+// Información específica de tu CUIT
+echo "\n=== INFORMACIÓN ESPECÍFICA DE TU CUIT ===\n";
+try {
+    $sales_points = $afip->ElectronicBilling->GetSalesPoints();
+    echo 'Puntos de venta habilitados para tu CUIT:';
+    var_dump($sales_points);
+} catch (Exception $e) {
+    echo "Error obteniendo puntos de venta: " . $e->getMessage() . "\n";
+    if (strpos($e->getMessage(), '602') !== false) {
+        echo "NOTA: Este error es normal en ambiente de homologación.\n";
+        echo "En producción, el CUIT debe tener puntos de venta asignados por ARCA.\n";
+    }
+}
 
 $voucher_types = $afip->ElectronicBilling->GetVoucherTypes();
 echo 'Obtener tipos de comprobantes disponibles:';

@@ -1,1 +1,0 @@
-ALTER TABLE clientes ADD COLUMN pide_factura TINYINT(1) NOT NULL DEFAULT 0;

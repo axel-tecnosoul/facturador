@@ -21,7 +21,7 @@ if(!empty($_GET["id_colaborador"]&& $_GET["id_colaborador"] != 0)) {
 
 //Ventas
 $pdo = Database::connect();
-$sql = "SELECT pc.id AS id_pago,c.nombre,co.id AS id_cobro,date_format(pc.fecha_pago,'%d/%m/%Y') AS fecha_pago,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,cl.razon_social,pc.monto,pc.observaciones FROM pagos_colaboradores pc INNER JOIN colaboradores c ON pc.id_colaborador=c.id INNER JOIN cobros co ON pc.id_cobro=co.id INNER JOIN clientes cl ON co.id_cliente=cl.id WHERE 1 $filtroDesde $filtroHasta $filtroCliente $filtroColaborador";
+$sql = "SELECT pc.id AS id_pago,c.nombre,co.id AS id_cobro,date_format(pc.fecha_pago,'%d/%m/%Y') AS fecha_pago,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,cl.nombre AS nombre_cliente,pc.monto,pc.observaciones FROM pagos_colaboradores pc INNER JOIN colaboradores c ON pc.id_colaborador=c.id INNER JOIN cobros co ON pc.id_cobro=co.id INNER JOIN clientes cl ON co.id_cliente=cl.id WHERE 1 $filtroDesde $filtroHasta $filtroCliente $filtroColaborador";
 //echo $sql;
 foreach ($pdo->query($sql) as $row) {
 
@@ -38,7 +38,7 @@ foreach ($pdo->query($sql) as $row) {
     "colaborador"=>$row["nombre"],
     "fecha_pago"=>$row["fecha_pago"],
     "fecha_hora_alta"=>$row["fecha_hora_alta"],
-    "razon_social"=>$row["razon_social"],
+    "razon_social"=>$row["nombre_cliente"],
     "monto"=>$row["monto"],
     "observaciones"=>$row["observaciones"],
     "acciones" => $btnModificar.$btnEliminar.$btnVer

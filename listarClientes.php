@@ -93,11 +93,12 @@ include("database.php");?>
                         <thead>
                           <tr>
                             <th>ID</th>
+                            <th>Nombre</th>
                             <th>Razon Socil</th>
                             <th>CUIT</th>
                             <th>E-Mail</th>
                             <th>Teléfono</th>
-                            <th>Direccion</th>
+                            <th>Activo</th>
                             <th>Pide Factura</th>
                             <th>Opciones</th>
                           </tr>
@@ -218,11 +219,12 @@ include("database.php");?>
           },
           "columns":[
             {"data": "id"},
+            {"data": "nombre"},
             {"data": "razon_social"},
             {"data": "cuit"},
             {"data": "email"},
             {"data": "telefono"},
-            {"data": "direccion"},
+            {"data": "activo"},
             {"data": "pide_factura"},
             {"data": "acciones"},
           ],

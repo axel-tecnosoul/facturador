@@ -87,12 +87,12 @@ $hoy=date("Y-m-d")?>
                             <label class="col-sm-3 col-form-label">Cliente</label>
                             <div class="col-sm-9"><?php
                               $pdo = Database::connect();
-                              $sql = "SELECT razon_social, monto_pesos FROM cobros co INNER JOIN clientes cl ON co.id_cliente=cl.id WHERE co.id = ?";
+                              $sql = "SELECT nombre, monto_pesos FROM cobros co INNER JOIN clientes cl ON co.id_cliente=cl.id WHERE co.id = ?";
                               $q = $pdo->prepare($sql);
                               $q->execute(array($_GET["id"]));
                               $data = $q->fetch(PDO::FETCH_ASSOC);
                               Database::disconnect();
-                              echo $data["razon_social"]." - $".number_format($data["monto_pesos"],0,",",".");?>
+                              echo $data["nombre"]." - $".number_format($data["monto_pesos"],0,",",".");?>
                               <input type="hidden" id="hidden_monto_pesos" value="<?=$data["monto_pesos"]?>">
                             </div>
                           </div>

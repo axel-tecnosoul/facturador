@@ -12,21 +12,25 @@ if(!empty($_GET["tipo_fecha"])){
 }
 
 $filtroDesde="";
-if(!empty($_GET["desde"]&& $_GET["desde"] != 0)) {
+if(!empty($_GET["desde"]) && $_GET["desde"] != 0) {
   $filtroDesde=" AND co.$tipo_fecha>='".$_GET["desde"]."'";
 }
 $filtroHasta="";
-if(!empty($_GET["hasta"]&& $_GET["hasta"] != 0)) {
+if(!empty($_GET["hasta"]) && $_GET["hasta"] != 0) {
   $filtroHasta=" AND co.$tipo_fecha<='".$_GET["hasta"]."'";
 }
 $filtroCliente="";
-if(!empty($_GET["id_cliente"]&& $_GET["id_cliente"] != 0)) {
+if(!empty($_GET["id_cliente"]) && $_GET["id_cliente"] != 0) {
   $filtroCliente=" AND co.id_cliente IN (".$_GET["id_cliente"].")";
+}
+$filtroEmisor="";
+if(!empty($_GET["id_emisor"]) && $_GET["id_emisor"] != 0) {
+  $filtroEmisor=" AND co.id_emisor IN (".$_GET["id_emisor"].")";
 }
 
 //Ventas
 $pdo = Database::connect();
-$sql = "SELECT co.id AS id_cobro,co.id_factura,co.fecha_factura,date_format(co.fecha_factura,'%d/%m/%Y') AS fecha_factura_formatted,date_format(co.fecha_cobro,'%d/%m/%Y') AS fecha_cobro_formatted,fecha_cobro,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,co.detalle,cl.razon_social,co.monto_pesos,SUM(pc.monto) AS total_pagado,co.monto_dolares,co.cotizacion_usd FROM cobros co INNER JOIN clientes cl ON co.id_cliente=cl.id LEFT JOIN pagos_colaboradores pc ON pc.id_cobro=co.id WHERE 1 $filtroDesde $filtroHasta $filtroCliente GROUP BY co.id";
+$sql = "SELECT co.id AS id_cobro,co.id_factura,co.fecha_factura,date_format(co.fecha_factura,'%d/%m/%Y') AS fecha_factura_formatted,date_format(co.fecha_cobro,'%d/%m/%Y') AS fecha_cobro_formatted,fecha_cobro,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,co.detalle,cl.nombre AS nombre_cliente,co.monto_pesos,SUM(pc.monto) AS total_pagado,co.monto_dolares,co.cotizacion_usd,COALESCE(em.razon_social, 'Sin emisor') AS emisor_razon_social FROM cobros co INNER JOIN clientes cl ON co.id_cliente=cl.id LEFT JOIN pagos_colaboradores pc ON pc.id_cobro=co.id LEFT JOIN emisores em ON co.id_emisor=em.id WHERE 1 $filtroDesde $filtroHasta $filtroCliente $filtroEmisor GROUP BY co.id";
 //echo $sql;
 foreach ($pdo->query($sql) as $row) {
 
@@ -39,7 +43,9 @@ foreach ($pdo->query($sql) as $row) {
   $btnNuevoPagoColaborador=' <a href="nuevoPagoColaborador.php?id='.$row["id_cobro"].'"><img src="img/dolar.png" width="30" border="0" alt="Ver Cobro" title="Nuevo Pago a Colaborador"></a>';
   $btnFactura="";
   if(!empty($row["id_factura"])){
-    $btnFactura=' <a href="Facturas/facturaCobro.php?id='.$row["id_factura"].'" target="_blank"><img src="img/pdf.png" width="24" height="25" border="0" alt="Factura" title="Descargar factura"></a>';
+    $hrefFactura='Facturas/facturaCobro.php?id='.$row["id_factura"];
+    $btnFactura=' 
+      <a href="'.$hrefFactura.'" target="_blank" style="display:inline-flex;align-items:center;justify-content:center;margin-left:4px;width:40px;height:40px;color:#dc3545;font-size:28px;line-height:1;" title="Ver factura PDF"><i class="fa fa-file-pdf-o" aria-hidden="true"></i></a>';
   }
   
   $monto_pesos=$row["monto_pesos"];
@@ -67,7 +73,8 @@ foreach ($pdo->query($sql) as $row) {
     "fecha_cobro"=>[$row["fecha_cobro"],$row["fecha_cobro_formatted"]],
     "fecha_hora_alta"=>$row["fecha_hora_alta"],
     "detalle"=>$row["detalle"],
-    "razon_social"=>$row["razon_social"],
+    "razon_social"=>$row["nombre_cliente"],
+    "emisor"=>$row["emisor_razon_social"],
     "monto_pesos"=>$monto_pesos,
     "total_pagado"=>$total_pagado,
     "rentabilidad_pesos"=>$rentabilidad_pesos,

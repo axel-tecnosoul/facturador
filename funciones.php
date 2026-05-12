@@ -48,6 +48,76 @@ function get_estado_comprobante($estado_abreviado){
   return $estado_completo;
 }
 
+/**
+ * Obtiene los tipos de condiciones de IVA para receptores según AFIP
+ * @return array Lista de condiciones fiscales con Id y descripción
+ */
+function getTiposCondicionesIvaReceptor(){
+  $arr_tax_types=[
+    [
+        "Id"=> 1,
+        "Desc"=> "IVA Responsable Inscripto",
+        "Cmp_Clase"=> "A/M/C"
+    ],
+    [
+        "Id"=> 6,
+        "Desc"=> "Responsable Monotributo",
+        "Cmp_Clase"=> "A/M/C"
+    ],
+    [
+        "Id"=> 13,
+        "Desc"=> "Monotributista Social",
+        "Cmp_Clase"=> "A/M/C"
+    ],
+    [
+        "Id"=> 16,
+        "Desc"=> "Monotributo Trabajador Independiente Promovido",
+        "Cmp_Clase"=> "A/M/C"
+    ],
+    [
+        "Id"=> 4,
+        "Desc"=> "IVA Sujeto Exento",
+        "Cmp_Clase"=> "B/C"
+    ],
+    [
+        "Id"=> 5,
+        "Desc"=> "Consumidor Final",
+        "Cmp_Clase"=> "B/C"
+    ],
+    [
+        "Id"=> 7,
+        "Desc"=> "Sujeto No Categorizado",
+        "Cmp_Clase"=> "B/C"
+    ],
+    [
+        "Id"=> 8,
+        "Desc"=> "Proveedor del Exterior",
+        "Cmp_Clase"=> "B/C"
+    ],
+    [
+        "Id"=> 9,
+        "Desc"=> "Cliente del Exterior",
+        "Cmp_Clase"=> "B/C"
+    ],
+    [
+        "Id"=> 10,
+        "Desc"=> "IVA Liberado – Ley N° 19.640",
+        "Cmp_Clase"=> "B/C"
+    ],
+    [
+        "Id"=> 15,
+        "Desc"=> "IVA No Alcanzado",
+        "Cmp_Clase"=> "B/C"
+    ]
+  ];
+
+  $tax_types = array_map(function($item) {
+    return (object)$item;
+  }, $arr_tax_types);
+  
+  return $tax_types;
+}
+
 function format_numero_comprobante($punto_venta,$numero_comprobante){
   return str_pad($punto_venta,4,"0",STR_PAD_LEFT)."-".str_pad($numero_comprobante,8,"0",STR_PAD_LEFT);
 }

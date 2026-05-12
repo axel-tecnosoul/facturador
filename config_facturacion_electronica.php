@@ -1,15 +1,17 @@
 <?php
 /*
-archivo de configuracion para los datos de facturacion electronica, espera la variable $homologacion para poder facturar en modo homolagcion
+Archivo de configuración para facturación electrónica ARCA (ex-AFIP)
+Espera la variable $homologacion para facturar en modo homologación
 */
 
-$homologacion=1;
+$homologacion=0;
 
-$cuit=30717754200;
+//$cuit=2035129034;
 $produccion=true;
-$aInitializeAFIP=array('CUIT' => $cuit,'production'=>$produccion);
+//$aInitializeAFIP=array('CUIT' => $cuit,'production'=>$produccion);
+$aInitializeAFIP=array('production'=>$produccion);
 if ($homologacion==1) {
-  $cuit=20351290340;
+  //$cuit=20351290340;
   $produccion=false;
   $ruta="crt_axel_homo/";
 
@@ -18,5 +20,6 @@ if ($homologacion==1) {
   $cert=$ruta."crt";
   $key=$ruta."key";
   //$aInitializeAFIP=array('CUIT' => $cuit);
-  $aInitializeAFIP=array('CUIT' => $cuit,'production'=>$produccion,'cert'=>$cert,'key'=>$key);
+  //$aInitializeAFIP=array('CUIT' => $cuit,'production'=>$produccion,'cert'=>$cert,'key'=>$key);
+  $aInitializeAFIP=array('production'=>$produccion,'cert'=>$cert,'key'=>$key);
 }

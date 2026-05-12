@@ -8,8 +8,12 @@ if(empty($_SESSION['user'])){
 include_once("funciones.php");
 include_once("database.php");
 $hoy=date("Y-m-d");
-//$desde="2024-01-01";
-$desde=date("Y-m-01",strtotime($hoy." -6 month"));
+// Si estamos en enero, mostrar últimos 6 meses; sino desde 1ro de enero del año actual
+if(date('n') == 1) {
+  $desde=date("Y-m-01",strtotime($hoy." -6 month"));
+} else {
+  $desde=date('Y').'-01-01';
+}
 $hasta=$hoy;?>
 <!DOCTYPE html>
 <html lang="en">
@@ -96,9 +100,21 @@ $hasta=$hoy;?>
                             <label for="id_cliente">Cliente:</label><br>
                             <select id="id_cliente" class="form-control form-control-sm filtraTabla selectpicker w-100" data-style="multiselect" data-selected-text-format="count > 1" data-actions-box="true" multiple><?php
                                 $pdo = Database::connect();
-                                $sql = "SELECT c.id AS id_cliente,c.razon_social FROM clientes c";
+                                $sql = "SELECT c.id AS id_cliente,c.nombre FROM clientes c";
                                 foreach ($pdo->query($sql) as $row) {?>
-                                  <option value="<?=$row["id_cliente"]?>"><?=$row["razon_social"]?></option><?php
+                                  <option value="<?=$row["id_cliente"]?>"><?=$row["nombre"]?></option><?php
+                                }
+                                Database::disconnect();?>
+                            </select>
+                          </td>
+                          <td rowspan="2" style="vertical-align: middle;" class="border-0 p-1">
+                            <label for="id_emisor">Emisor:</label><br>
+                            <select id="id_emisor" class="form-control form-control-sm filtraTabla selectpicker w-100" data-style="multiselect" data-selected-text-format="count > 1" data-actions-box="true" multiple>
+                              <option value="">Sin emisor</option><?php
+                                $pdo = Database::connect();
+                                $sql = "SELECT id, razon_social FROM emisores WHERE activo = 1 ORDER BY razon_social";
+                                foreach ($pdo->query($sql) as $row) {?>
+                                  <option value="<?=$row["id"]?>"><?=$row["razon_social"]?></option><?php
                                 }
                                 Database::disconnect();?>
                             </select>
@@ -132,6 +148,7 @@ $hasta=$hoy;?>
                           <tr>
                             <th class="text-center">ID</th>
                             <th class="text-center">Cliente</th>
+                            <th class="text-center">Emisor</th>
                             <!-- <th class="text-center">Fecha y hora alta</th> -->
                             <th class="text-center">Fecha factura</th>
                             <th class="text-center">Fecha cobro</th>
@@ -145,6 +162,7 @@ $hasta=$hoy;?>
                         </thead>
                         <tfoot>
                           <tr>
+                            <th></th>
                             <th></th>
                             <th></th>
                             <th></th>
@@ -250,6 +268,7 @@ $hasta=$hoy;?>
       let desde=$("#desde").val();
       let hasta=$("#hasta").val();
       let id_cliente=$("#id_cliente").val();
+      let id_emisor=$("#id_emisor").val();
       let tipo_fecha=$("input[name='tipo_fecha[]']:checked").val();
 
       let table=$('#dataTables-example666')
@@ -260,7 +279,7 @@ $hasta=$hoy;?>
         processing: true,
         ajax:{
           //url:'ajaxListarCobros.php?desde='+desde+'&hasta='+hasta+'&tipo_fecha='+tipo_fecha+'&forma_pago='+forma_pago+'&tipo_comprobante='+tipo_comprobante+'&id_almacen='+id_almacen
-          url:'ajaxListarCobros.php?desde='+desde+'&hasta='+hasta+'&id_cliente='+id_cliente+'&tipo_fecha='+tipo_fecha,dataSrc:""
+          url:'ajaxListarCobros.php?desde='+desde+'&hasta='+hasta+'&id_cliente='+id_cliente+'&id_emisor='+id_emisor+'&tipo_fecha='+tipo_fecha,dataSrc:""
         },
 				stateSave: true,
 				responsive: true,
@@ -288,6 +307,7 @@ $hasta=$hoy;?>
         "columns":[
           {"data": "id"},
           {"data": "razon_social"},
+          {"data": "emisor"},
           //{"data": "fecha_cobro"},
           {
             render: function(data, type, row, meta) {
@@ -348,7 +368,7 @@ $hasta=$hoy;?>
         ],
         columnDefs: [
           //{ targets: [0], visible: false},
-          { targets: [2], type: 'date'},
+          { targets: [3], type: 'date'},
         ],
         initComplete: function(settings, json){
           var api = this.api();
@@ -372,9 +392,9 @@ $hasta=$hoy;?>
           totalDolares = Intl.NumberFormat('es-AR', {style: 'currency', currency: 'USD', minimumFractionDigits: 0}).format(totalDolares)
           totalPagado = Intl.NumberFormat('es-AR', {style: 'currency', currency: 'ARS', minimumFractionDigits: 0}).format(totalPagado)
 
-          $(api.column(4).footer()).html(totalPesos);
-          $(api.column(5).footer()).html(totalDolares);
-          $(api.column(6).footer()).html(totalPagado);
+          $(api.column(5).footer()).html(totalPesos);
+          $(api.column(6).footer()).html(totalDolares);
+          $(api.column(7).footer()).html(totalPagado);
 
           $('[title]').tooltip();
         }

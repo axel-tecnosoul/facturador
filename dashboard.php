@@ -226,11 +226,11 @@ require 'database.php';?>
                     </div>
                     <div class="card-body recent-notification"><?php
                       $pdo = Database::connect();
-                      $sql = " SELECT cl.razon_social,monto_pesos,monto_dolares FROM cobros co inner join clientes cl ON co.id_cliente=cl.id WHERE co.fecha_factura IS NULL AND co.fecha_cobro IS NULL";
+                      $sql = " SELECT cl.nombre,monto_pesos,monto_dolares FROM cobros co inner join clientes cl ON co.id_cliente=cl.id WHERE co.fecha_factura IS NULL AND co.fecha_cobro IS NULL";
                       foreach ($pdo->query($sql) as $row) {?>
                         <div class="media">
                           <h6><?php echo $row[5]; ?></h6>
-                          <div class="media-body"><span><?=$row["razon_social"]?> (<?=$row["monto_pesos"]?>) - <?=$row["monto_dolares"]?></span>
+                          <div class="media-body"><span><?=$row["nombre"]?> (<?=$row["monto_pesos"]?>) - <?=$row["monto_dolares"]?></span>
                             <p class="f-12"><?=$row[2]?></p>
                           </div>
                         </div><?php 

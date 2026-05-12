@@ -1,43 +1,65 @@
 <?php
 require("config.php");
-if(empty($_SESSION['user'])){
+if (empty($_SESSION['user'])) {
   header("Location: index.php");
-  die("Redirecting to index.php"); 
+  die("Redirecting to index.php");
 }
+
 require 'database.php';
+
+$id = null;
 if (!empty($_GET['id'])) {
-  $id = $_GET['id'];
-}
-if ( null==$id ) {
-  header("Location: listarPagos.php");
+  $id = (int)$_GET['id'];
 }
 
-if ( !empty($_POST)) {
-  
-  // insert data
-  $pdo = Database::connect();
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  
-  $sql = "UPDATE ventas_detalle set caja_egreso = ?, id_almacen = ?, id_forma_pago = ? where id = ?";
-  $q = $pdo->prepare($sql);
-  $q->execute(array($_POST['tipo_caja'],$_POST['id_almacen'],$_POST['id_forma_pago'],$_POST['id']));
-  
-  Database::disconnect();
-  
+if ($id === null || $id <= 0) {
   header("Location: listarPagos.php");
+  exit;
+}
 
-} else {
-  
+if (!empty($_POST)) {
   $pdo = Database::connect();
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-  
-  $sql = "SELECT pc.id AS id_pago,co.id AS id_cobro,date_format(pc.fecha_pago,'%d/%m/%Y') AS fecha_pago,date_format(co.fecha_hora_alta,'%d/%m/%Y') AS fecha_hora_alta,cl.razon_social,pc.monto,pc.observaciones FROM pagos_colaboradores pc INNER JOIN colaboradores c ON pc.id_colaborador=c.id INNER JOIN cobros co ON pc.id_cobro=co.id INNER JOIN clientes cl ON co.id_cliente=cl.id WHERE pc.id = ? ";
+
+  $sql = "UPDATE pagos_colaboradores SET id_colaborador = ?, fecha_pago = ?, monto = ?, observaciones = ? WHERE id = ?";
   $q = $pdo->prepare($sql);
-  $q->execute(array($id));
-  $data = $q->fetch(PDO::FETCH_ASSOC);
-  
+  $q->execute(array(
+    $_POST['id_colaborador'],
+    $_POST['fecha_pago'],
+    $_POST['monto_pesos'],
+    $_POST['observaciones'],
+    $id
+  ));
+
   Database::disconnect();
-}?>
+
+  header("Location: listarPagos.php");
+  exit;
+}
+
+$pdo = Database::connect();
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+$sql = "SELECT pc.id AS id_pago, pc.id_colaborador, pc.id_cobro, pc.fecha_pago, pc.monto, pc.observaciones, cl.nombre AS nombre_cliente, co.monto_pesos
+        FROM pagos_colaboradores pc
+        INNER JOIN cobros co ON pc.id_cobro = co.id
+        INNER JOIN clientes cl ON co.id_cliente = cl.id
+        WHERE pc.id = ?";
+$q = $pdo->prepare($sql);
+$q->execute(array($id));
+$data = $q->fetch(PDO::FETCH_ASSOC);
+
+if (!$data) {
+  Database::disconnect();
+  header("Location: listarPagos.php");
+  exit;
+}
+
+$sql = "SELECT id, nombre FROM colaboradores ORDER BY nombre";
+$colaboradores = $pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+
+Database::disconnect();
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -72,7 +94,7 @@ if ( !empty($_POST)) {
                 <div class="col-2">
                   <div class="bookmark pull-right">
                     <ul>
-                      <li><a  target="_blank" data-container="body" data-toggle="popover" data-placement="top" title="" data-original-title="<?php echo date('d-m-Y');?>"><i data-feather="calendar"></i></a></li>
+                      <li><a  target="_blank" data-container="body" data-toggle="popover" data-placement="top" title="" data-original-title="<?=date('d-m-Y');?>"><i data-feather="calendar"></i></a></li>
                     </ul>
                   </div>
                 </div>
@@ -88,94 +110,46 @@ if ( !empty($_POST)) {
                   <div class="card-header">
                     <h5>Modificar Pago a Colaborador</h5>
                   </div>
-				          <form class="form theme-form" role="form" method="post" action="modificarPagoColaborador.php?id=<?php echo $id?>">
+			          <form class="form theme-form" role="form" method="post" action="modificarPagoColaborador.php?id=<?=$id; ?>">
                     <div class="card-body">
                       <div class="row">
                         <div class="col">
-
                           <div class="form-group row">
-                            <div class="col-sm-3">Fecha y hora:</div>
-                            <div class="col-sm-9"><?php echo ($v == 1) ?  $data["fecha_hora_pago"] : $data2["fecha_hora_pago"] ?>hs.</div>
+                            <label class="col-sm-3 col-form-label">Cliente</label>
+                            <div class="col-sm-9"><?=$data['nombre_cliente'] . " - $" . number_format((float)$data['monto_pesos'], 0, ",", "."); ?></div>
                           </div>
                           <div class="form-group row">
-                            <div class="col-sm-3">Proveedor:</div>
-                            <div class="col-sm-9"><?php echo($v == 1) ?  "(".$data["id"].") ".$data["nombre"]." ".$data["apellido"] :  "(".$data2["id"].") ".$data2["nombre"]." ".$data2["apellido"]?></div>
-                          </div>
-                          <div class="form-group row">
-                            <div class="col-sm-3">Producto:</div>
-                            <div class="col-sm-9"><?php echo($v == 1) ?  "(".$data["codigo"].") ".$data["descripcion"] :  "(".$data2["codigo"].") ".$data2["descripcion"]?></div>
-                          </div>
-                          <div class="form-group row">
-                            <div class="col-sm-3">Caja: </div>
+                            <label class="col-sm-3 col-form-label">Colaborador</label>
                             <div class="col-sm-9">
-                              <label class="d-block" for="edo-ani1">
-                                <input class="radio_animated" value="Grande" required <?=$checkedCajaGrande?> id="edo-ani1" type="radio" name="tipo_caja"><label for="edo-ani1">Grande</label>
-                              </label>
-                              <label class="d-block" for="edo-ani">
-                                <input class="radio_animated" value="Chica" required <?=$checkedCajaChica?> id="edo-ani" type="radio" name="tipo_caja"><label for="edo-ani">Chica</label>
-                              </label>
-                            </div>
-                          </div>
-                          <div class="form-group row">
-                            <div class="col-sm-3">Almacen: </div>
-                            <div class="col-sm-9">
-                              <select name="id_almacen" style="width: 100%;" class="js-example-basic-single" required="required">
-                                <option value="">Seleccione</option><?php
-                                $pdo = Database::connect();
-                                $sql = " SELECT id, almacen FROM almacenes";
-                                foreach ($pdo->query($sql) as $row) {
-                                  $selected="";
-                                  $almacen = "";
-                                  if ($v == 1){
-                                    $almacen = $data["id_almacen"];
-                                  }else{
-                                    $almacen = $data2["id_almacen"];
-                                  }
-                                  if($almacen==$row["id"]){
-                                    $selected="selected";
-                                  }?>
-                                  <option value="<?=$row["id"]?>" <?=$selected?>><?=$row["almacen"]?></option><?php
-                                }
-                                Database::disconnect();?>
-                              </select>
-                            </div>
-                          </div>
-                          <div class="form-group row">
-                            <div class="col-sm-3">Forma de Pago: </div>
-                            <div class="col-sm-9">
-                              <select name="id_forma_pago" id="id_forma_pago" style="width: 100%;" class="js-example-basic-single" required="required">
+                              <select name="id_colaborador" id="id_colaborador" class="form-control form-control-sm filtraTabla selectpicker multiselect w-100" required>
                                 <option value="">Seleccione...</option><?php
-                                $pdo = Database::connect();
-                                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                                $sqlZon = "SELECT id, forma_pago FROM forma_pago WHERE 1";
-                                $q = $pdo->prepare($sqlZon);
-                                $q->execute();
-                                while ($fila = $q->fetch(PDO::FETCH_ASSOC)) {
-                                  $selected="";
-                                  $forma_pago = "";
-                                  if ($v == 1){
-                                    $forma_pago = $data["id_forma_pago"];
-                                  }else{
-                                    $forma_pago = $data2["id_forma_pago"];
-                                  }
-                                  if($forma_pago==$fila["id"]){
-                                    $selected="selected";
-                                  }?>
-                                  <option value='<?=$fila['id']?>' <?=$selected?>><?=$fila['forma_pago']?></option><?php
-                                }
-                                Database::disconnect();?>
+                                foreach ($colaboradores as $colaborador) {
+                                  $selected = ((int)$colaborador['id'] === (int)$data['id_colaborador']) ? 'selected' : '';?>
+                                  <option value="<?=$colaborador['id']; ?>" <?=$selected; ?>><?=$colaborador['nombre']; ?></option><?php
+                                }?>
                               </select>
-                              <input type="hidden" name='condicion' id='condicion' value=<?= $v ?>>
-                              <input type="hidden" name='id' id='id' value=<?php echo($v == 1) ? implode(',', $ventas) : implode(',', $canjes); ?>>
                             </div>
                           </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Fecha de pago</label>
+                            <div class="col-sm-9"><input name="fecha_pago" type="date" class="form-control" value="<?=$data['fecha_pago']; ?>" required></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Monto en pesos</label>
+                            <div class="col-sm-9"><input name="monto_pesos" id="monto_pesos" type="number" step="0.01" maxlength="99" class="form-control" value="<?=$data['monto']; ?>" required></div>
+                          </div>
+                          <div class="form-group row">
+                            <label class="col-sm-3 col-form-label">Observaciones</label>
+                            <div class="col-sm-9"><input name="observaciones" type="text" maxlength="199" class="form-control" value="<?=htmlspecialchars((string)$data['observaciones'], ENT_QUOTES, 'UTF-8'); ?>"></div>
+                          </div>
+                          <input type="hidden" id="hidden_monto_pesos" value="<?=$data['monto_pesos']; ?>">
                         </div>
                       </div>
                     </div>
                     <div class="card-footer">
                       <div class="col-sm-9 offset-sm-3">
                         <button class="btn btn-primary" type="submit">Modificar</button>
-						            <a href='listarPagosRealizados.php' class="btn btn-light">Volver</a>
+			                  <a href='listarPagos.php' class="btn btn-light">Volver</a>
                       </div>
                     </div>
                   </form>
@@ -212,7 +186,23 @@ if ( !empty($_POST)) {
     <!-- Theme js-->
     <script src="assets/js/script.js"></script>
     <!-- Plugin used-->
-	<script src="assets/js/select2/select2.full.min.js"></script>
+    <script src="assets/js/select2/select2.full.min.js"></script>
     <script src="assets/js/select2/select2-custom.js"></script>
+    <script>
+      $(document).ready(function() {
+        $("#id_colaborador").on("change", function() {
+          let montoAPagar = "";
+          if (this.value == 3) {
+            let montoPesos = parseFloat($("#hidden_monto_pesos").val() || 0);
+            let porcentaje = 4;
+            let montoNeto = montoPesos - (montoPesos * porcentaje / 100);
+            montoAPagar = (montoNeto / 2).toFixed(2);
+          }
+          if (montoAPagar !== "") {
+            $("#monto_pesos").val(montoAPagar);
+          }
+        });
+      });
+    </script>
   </body>
 </html>

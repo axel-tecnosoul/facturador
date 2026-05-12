@@ -87,7 +87,7 @@ $hasta=$hoy;?>
                       $datasets=[];
                       $aLabels=[];
                       $aColoresProductos=[];
-                      $formatoFechaFin="DATE_FORMAT(fecha_cobro,'%m-%Y')";
+                      $formatoFechaFin="DATE_FORMAT(c.fecha_cobro,'%m-%Y')";
 
                       $modoDebug=0;
 
@@ -97,8 +97,12 @@ $hasta=$hoy;?>
                           $aColoresProductos[$key]=$color;
 
                           //$sql2 = "SELECT $formatoFechaFin AS mes,SUM($monto) AS monto FROM cobros WHERE fecha_cobro IS NOT NULL GROUP BY $formatoFechaFin";//MONTH(fecha_inicio)
-                          $sql2 = "SELECT $formatoFechaFin AS mes, SUM($monto) AS monto FROM cobros WHERE fecha_cobro IS NOT NULL AND fecha_cobro >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH) GROUP BY $formatoFechaFin";
+                          //$sql2 = "SELECT $formatoFechaFin AS mes, SUM(c.$monto) AS monto FROM cobros c WHERE c.fecha_cobro IS NOT NULL AND c.fecha_cobro >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH) GROUP BY $formatoFechaFin";
+
+                          //reconstruccion de la consulta que obtiene la rentabilidad mensual, teniendo en cuenta los pagos realizados
+                          $sql2 = "SELECT $formatoFechaFin AS mes, SUM(c.$monto) AS monto, SUM(p.pagado) as pagado_monto_pesos, SUM(p.pagado/p.cotizacion_usd) AS pagado_monto_dolares FROM cobros c LEFT JOIN (SELECT pc.id_cobro,SUM(pc.monto) AS pagado,c.cotizacion_usd FROM pagos_colaboradores pc JOIN cobros c ON pc.id_cobro=c.id GROUP BY c.id) p ON p.id_cobro=c.id WHERE c.fecha_cobro IS NOT NULL AND c.fecha_cobro >= DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-01'), INTERVAL 11 MONTH) GROUP BY $formatoFechaFin";
                           $q2 = $pdo->prepare($sql2);
+                          //echo $sql2."<br>";
                           $q2->execute();
 
                           if ($modoDebug==1) {
@@ -110,7 +114,8 @@ $hasta=$hoy;?>
                           if($q2->rowCount()>0){
                               $data=$ultimosDoceMeses;
                               while ($fila2 = $q2->fetch(PDO::FETCH_ASSOC)) {
-                                $data[$fila2["mes"]]+=$fila2["monto"];
+                                //$data[$fila2["mes"]]+=$fila2["monto"];
+                                $data[$fila2["mes"]]+=($fila2["monto"]-$fila2["pagado_".$monto]);
                               }
                               $datasets[$key][]=[
                                   "label"=> $key,//no hace nada, se debe agregar la leyenda manualmente
@@ -155,9 +160,9 @@ $hasta=$hoy;?>
                             <label for="id_cliente">Cliente:</label><br>
                             <select id="id_cliente" class="form-control form-control-sm filtraTabla selectpicker w-100" data-style="multiselect" data-selected-text-format="count > 1" data-actions-box="true" multiple><?php
                                 $pdo = Database::connect();
-                                $sql = "SELECT c.id AS id_cliente,c.razon_social FROM clientes c";
+                                $sql = "SELECT c.id AS id_cliente,c.nombre FROM clientes c";
                                 foreach ($pdo->query($sql) as $row) {?>
-                                  <option value="<?=$row["id_cliente"]?>"><?=$row["razon_social"]?></option><?php
+                                  <option value="<?=$row["id_cliente"]?>"><?=$row["nombre"]?></option><?php
                                 }
                                 Database::disconnect();?>
                             </select>

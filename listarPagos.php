@@ -86,9 +86,9 @@ include_once("database.php");?>
                             <label for="id_cliente">Cliente:</label><br>
                             <select id="id_cliente" class="form-control form-control-sm filtraTabla selectpicker w-100" data-style="multiselect" data-selected-text-format="count > 1" data-actions-box="true" multiple><?php
                                 $pdo = Database::connect();
-                                $sql = "SELECT c.id AS id_cliente,c.razon_social FROM clientes c";
+                                $sql = "SELECT c.id AS id_cliente,c.nombre FROM clientes c";
                                 foreach ($pdo->query($sql) as $row) {?>
-                                  <option value="<?=$row["id_cliente"]?>"><?=$row["razon_social"]?></option><?php
+                                  <option value="<?=$row["id_cliente"]?>"><?=$row["nombre"]?></option><?php
                                 }
                                 Database::disconnect();?>
                             </select>
