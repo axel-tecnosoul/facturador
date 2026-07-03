@@ -386,26 +386,26 @@ class PDF extends FPDF {
       if (strlen($descripcion) > $largoMaximo) {
         $descripcion = substr($descripcion, 0, $largoMaximo) . '[...]';
       }
-      $cantidad = (int)$row['cantidad'];
+      $cantidad = (float)$row['cantidad'];
       $precio = (float)$row['precio'];
-            $bonif = (float)($row['bonificacion'] ?? 0);
-            $subtotalBruto = $precio * $cantidad;
-            $subtotalItem = $subtotalBruto - $bonif;
-            if ($subtotalItem < 0) {
-                $subtotalItem = 0;
-            }
+      $bonif = (float)($row['bonificacion'] ?? 0);
+      $subtotalBruto = $precio * $cantidad;
+      $subtotalItem = $subtotalBruto - $bonif;
+      if ($subtotalItem < 0) {
+        $subtotalItem = 0;
+      }
       $totalCalculado += $subtotalItem;
 
       $this->Cell(15, 7, pdfText(''), 1, 0, 'C', 0);
       $this->Cell(100, 7, pdfText($descripcion), 1, 0, 'L', 0);
       $this->Cell(15, 7, pdfText((string)$cantidad), 1, 0, 'C', 0);
       $this->Cell(26, 7, pdfText('$' . formatMoney($precio)), 1, 0, 'R', 0);
-            if ($mostrarBonificacion) {
-                $this->Cell(12, 7, pdfText('$' . formatMoney($bonif)), 1, 0, 'R', 0);
-                $this->Cell(26, 7, pdfText('$' . formatMoney($subtotalItem)), 1, 1, 'R', 0);
-            } else {
-                $this->Cell(38, 7, pdfText('$' . formatMoney($subtotalItem)), 1, 1, 'R', 0);
-            }
+      if ($mostrarBonificacion) {
+        $this->Cell(12, 7, pdfText('$' . formatMoney($bonif)), 1, 0, 'R', 0);
+        $this->Cell(26, 7, pdfText('$' . formatMoney($subtotalItem)), 1, 1, 'R', 0);
+      } else {
+        $this->Cell(38, 7, pdfText('$' . formatMoney($subtotalItem)), 1, 1, 'R', 0);
+      }
 
       $ln = $ln + 7;//Salto de linea que resta del total
     }

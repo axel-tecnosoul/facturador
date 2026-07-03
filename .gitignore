@@ -7,3 +7,4 @@ miroperitodb.sql
 
 *.sql
 vendor/
+codes/

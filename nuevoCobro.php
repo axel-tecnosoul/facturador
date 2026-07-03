@@ -39,14 +39,14 @@ if ( !empty($_POST)) {
         }
         $desc=trim($item['descripcion']);
         $precio=filter_var($item['precio'],FILTER_VALIDATE_FLOAT);
-        $cantidad=filter_var($item['cantidad'],FILTER_VALIDATE_INT);
-        if($desc==='' || $precio===false || $cantidad===false || $cantidad<1){
+        $cantidad=filter_var($item['cantidad'],FILTER_VALIDATE_FLOAT);
+        if($desc==='' || $precio===false || $cantidad===false || $cantidad<0.1){
           $pdo->rollBack();
           die('Datos de ítems inválidos');
         }
         $desc=htmlspecialchars($desc,ENT_QUOTES,'UTF-8');
         $itemsSan[]=['descripcion'=>$desc,'precio'=>$precio,'cantidad'=>$cantidad];
-        $totalFactura+=floatval($precio)*intval($cantidad);
+        $totalFactura+=floatval($precio)*floatval($cantidad);
       }
     }
     
@@ -351,7 +351,7 @@ $hoy=date("Y-m-d")?>
             var row='<tr data-index="'+idx+'">'+
               '<td><input type="text" name="items['+idx+'][descripcion]" class="form-control" required></td>'+
               '<td><input type="number" step="100" name="items['+idx+'][precio]" class="form-control precio" required></td>'+
-              '<td><input type="number" name="items['+idx+'][cantidad]" class="form-control cantidad" value="1" required'+cantidadReadonly+'></td>'+
+              '<td><input type="number" name="items['+idx+'][cantidad]" class="form-control cantidad" value="1" step="0.1" required'+cantidadReadonly+'></td>'+
               '<td><input type="text" class="form-control text-right subtotal subtotal-input" value="0" readonly tabindex="-1"></td>'+
               '<td class="acciones-cell"><button type="button" class="btn btn-danger btn-sm remove" title="Eliminar fila"><i data-feather="trash-2" class="item-trash-icon"></i></button></td>'+
               '</tr>';
