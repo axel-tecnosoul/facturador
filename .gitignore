@@ -6,5 +6,6 @@ miroperitodb.sql
 .env
 
 *.sql
+!migrations/20260907_notas_credito_cobros.sql
 vendor/
 codes/

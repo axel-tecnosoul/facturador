@@ -119,6 +119,14 @@ $hasta=$hoy;?>
                                 Database::disconnect();?>
                             </select>
                           </td>
+                          <td rowspan="2" style="vertical-align: middle;" class="border-0 p-1">
+                            <label for="estado_cobro">Estado:</label>
+                            <select id="estado_cobro" class="form-control form-control-sm filtraTabla">
+                              <option value="activos" selected>Activos</option>
+                              <option value="anulados">Anulados</option>
+                              <option value="todos">Todos</option>
+                            </select>
+                          </td>
                           <!-- <td rowspan="2" style="vertical-align: middle;" class="border-0 p-1">
                             <label for="tipo_comprobante">Tipo Cbte:</label><br>
                             <select id="tipo_comprobante" class="form-control form-control-sm filtraTabla selectpicker w-100" data-style="multiselect" data-selected-text-format="count > 1" multiple>
@@ -156,7 +164,7 @@ $hasta=$hoy;?>
                             <th class="text-center">Monto USD</th>
                             <th class="text-center">Total pagado</th>
                             <th class="text-center">Opciones</th>
-                            <th class="none">Detalle:</th>
+                            <th class="none"></th>
                             <!-- <th class="none">Fecha factura:</th> -->
                           </tr>
                         </thead>
@@ -279,7 +287,7 @@ $hasta=$hoy;?>
         processing: true,
         ajax:{
           //url:'ajaxListarCobros.php?desde='+desde+'&hasta='+hasta+'&tipo_fecha='+tipo_fecha+'&forma_pago='+forma_pago+'&tipo_comprobante='+tipo_comprobante+'&id_almacen='+id_almacen
-          url:'ajaxListarCobros.php?desde='+desde+'&hasta='+hasta+'&id_cliente='+id_cliente+'&id_emisor='+id_emisor+'&tipo_fecha='+tipo_fecha,dataSrc:""
+          url:'ajaxListarCobros.php?desde='+desde+'&hasta='+hasta+'&id_cliente='+id_cliente+'&id_emisor='+id_emisor+'&tipo_fecha='+tipo_fecha+'&estado='+$('#estado_cobro').val(),dataSrc:""
         },
 				stateSave: true,
 				responsive: true,
@@ -363,7 +371,7 @@ $hasta=$hoy;?>
             className: "dt-body-right",
           },
           {"data": "acciones"},
-          {"data": "detalle"},
+          {"data": "detalle", "className": "none"},
           //{"data": "fecha_factura"},
         ],
         columnDefs: [

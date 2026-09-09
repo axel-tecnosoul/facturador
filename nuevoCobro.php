@@ -5,8 +5,9 @@ if(empty($_SESSION['user'])){
   die("Redirecting to index.php"); 
 }
 require 'database.php';
+require_once 'validarClienteFacturacion.php';
 if ( !empty($_POST)) {
-  $modoDebug=1;
+  $modoDebug=0;
   if($modoDebug==1){
     var_dump($_POST);
   }
@@ -56,6 +57,7 @@ if ( !empty($_POST)) {
     }
 
     if($generarFactura){
+      validarClienteParaFactura($pdo, $id_cliente);
       if($id_emisor===false || $id_emisor===null){
         $pdo->rollBack();
         die('Debe seleccionar un emisor para generar factura');
@@ -94,6 +96,13 @@ if ( !empty($_POST)) {
     $q = $pdo->prepare($sql);
     $q->execute(array($id_cliente,$id_emisor,$_POST['fecha_factura'],$fecha_cobro,$monto_pesos,$cotizacion_usd,$monto_dolares,$detalle,$_SESSION["user"]['id'],$idFactura));
 
+    $idCobro = $pdo->lastInsertId();
+    if (!$idFactura) {
+      $qDetalle = $pdo->prepare('INSERT INTO cobro_detalle (id_cobro,descripcion,precio,cantidad) VALUES (?,?,?,?)');
+      foreach ($itemsSan as $item) {
+        $qDetalle->execute(array($idCobro,$item['descripcion'],$item['precio'],$item['cantidad']));
+      }
+    }
     $pdo->commit();
 
     Database::disconnect();
@@ -102,7 +111,8 @@ if ( !empty($_POST)) {
       require_once 'informarFacturaARCA.php';
       $resultadoArca = informarFacturaARCA($idFactura);
       if(stripos($resultadoArca,'Error') !== false){
-        echo "Error en la comunicación con ARCA: $resultadoArca";
+        $_SESSION['mensaje_nc'] = 'El cobro se guardo, pero la factura no se autorizo. '.$resultadoArca;
+        header('Location: modificarCobro.php?id='.(int)$idCobro, true, 303);
         exit;
       }
     }
@@ -115,6 +125,8 @@ if ( !empty($_POST)) {
     die('Error al procesar el cobro: '.$e->getMessage());
   }
 }
+// Leer el ambiente para mostrarlo despues de procesar el cobro.
+require 'config_facturacion_electronica.php';
 $hoy=date("Y-m-d")?>
 <!DOCTYPE html>
 <html lang="en">
@@ -209,6 +221,12 @@ $hoy=date("Y-m-d")?>
                   </div>
 				          <form class="form theme-form" role="form" method="post" action="nuevoCobro.php">
                     <div class="card-body">
+                      <?php if ((int)$homologacion === 1) { ?>
+                        <div class="alert alert-warning" role="alert">
+                          <strong>Modo homologaci&oacute;n activo</strong><br>
+                          Si genera una factura, se emitir&aacute; en el entorno de pruebas de ARCA y no tendr&aacute; validez fiscal.
+                        </div>
+                      <?php } ?>
                       <div class="row">
                         <div class="col">
                           <div class="form-group row">
@@ -234,9 +252,9 @@ $hoy=date("Y-m-d")?>
                               <select name="id_cliente" class="form-control form-control-sm filtraTabla selectpicker multiselect w-100" data-live-search="true" required>
                                 <option value="">Seleccione...</option><?php
                                 $pdo = Database::connect();
-                                $sql = "SELECT c.id AS id_cliente,c.nombre,c.pide_factura FROM clientes c WHERE c.activo = 1";
+                                $sql = "SELECT c.id AS id_cliente,c.nombre,c.pide_factura,c.cuit,c.id_cond_fiscal,c.cond_fiscal FROM clientes c WHERE c.activo = 1";
                                 foreach ($pdo->query($sql) as $row) {?>
-                                  <option value="<?=$row["id_cliente"]?>" data-pide-factura="<?=$row["pide_factura"]?>"><?=$row["nombre"]?></option><?php
+                                  <option value="<?=$row["id_cliente"]?>" data-pide-factura="<?=$row["pide_factura"]?>" data-fiscal="<?=htmlspecialchars(json_encode(analizarClienteFacturacion($row)), ENT_QUOTES, 'UTF-8')?>"><?=$row["nombre"]?></option><?php
                                 }
                                 Database::disconnect();?>
                               </select>
@@ -244,6 +262,7 @@ $hoy=date("Y-m-d")?>
                             <label class="col-sm-3 col-form-label" for="generar_factura">Generar factura</label>
                             <div class="col-sm-3"><input type="checkbox" name="generar_factura" id="generar_factura"></div>
                           </div>
+                          <div id="cliente_facturacion_aviso" class="alert" role="status" aria-live="polite" style="display:none;"></div>
                           <table class="table cobros-table">
                             <colgroup>
                               <col class="desc-col">
@@ -305,6 +324,7 @@ $hoy=date("Y-m-d")?>
     </div>
     <!-- latest jquery-->
     <script src="assets/js/jquery-3.2.1.min.js"></script>
+    <script src="assets/js/cliente-facturacion.js"></script>
     <!-- Bootstrap js-->
     <script src="assets/js/bootstrap/popper.min.js"></script>
     <script src="assets/js/bootstrap/bootstrap.js"></script>
@@ -330,6 +350,7 @@ $hoy=date("Y-m-d")?>
           let itemIndex = $('#detalles tr').length;
           function syncFacturaRules(){
             var facturaActiva = $('#generar_factura').is(':checked');
+            if($('#detalles tr').length===0){addRow();}
             $('#id_emisor').prop('required',facturaActiva);
             $('input[name="fecha_factura"]').prop('required',facturaActiva);
             $('#emisor_help').toggle(facturaActiva && !$('#id_emisor').val());
@@ -339,6 +360,7 @@ $hoy=date("Y-m-d")?>
             if(!facturaActiva){
               $('input[name*="[cantidad]"]').val(1);
             }
+            calcTotal();
             $('.selectpicker').selectpicker('refresh');
           }
           function formatNumber(num){
@@ -350,7 +372,7 @@ $hoy=date("Y-m-d")?>
             var cantidadReadonly = facturaActiva ? '' : ' readonly';
             var row='<tr data-index="'+idx+'">'+
               '<td><input type="text" name="items['+idx+'][descripcion]" class="form-control" required></td>'+
-              '<td><input type="number" step="100" name="items['+idx+'][precio]" class="form-control precio" required></td>'+
+              '<td><input type="number" step="10" name="items['+idx+'][precio]" class="form-control precio" required></td>'+
               '<td><input type="number" name="items['+idx+'][cantidad]" class="form-control cantidad" value="1" step="0.1" required'+cantidadReadonly+'></td>'+
               '<td><input type="text" class="form-control text-right subtotal subtotal-input" value="0" readonly tabindex="-1"></td>'+
               '<td class="acciones-cell"><button type="button" class="btn btn-danger btn-sm remove" title="Eliminar fila"><i data-feather="trash-2" class="item-trash-icon"></i></button></td>'+
@@ -395,7 +417,7 @@ $hoy=date("Y-m-d")?>
           });
           $('#detalles').on('click','.remove',function(){
             $(this).closest('tr').remove();
-            calcTotal();
+            syncFacturaRules();
           });
           $('#detalles').on('input','.precio, .cantidad',function(){
             calcTotal();

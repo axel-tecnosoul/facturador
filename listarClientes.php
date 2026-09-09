@@ -96,8 +96,9 @@ include("database.php");?>
                             <th>Nombre</th>
                             <th>Razon Socil</th>
                             <th>CUIT</th>
-                            <th>E-Mail</th>
-                            <th>Teléfono</th>
+                            <th>Condici&oacute;n frente al IVA</th>
+                            <!-- <th>E-Mail</th>
+                            <th>Teléfono</th> -->
                             <th>Activo</th>
                             <th>Pide Factura</th>
                             <th>Opciones</th>
@@ -222,8 +223,9 @@ include("database.php");?>
             {"data": "nombre"},
             {"data": "razon_social"},
             {"data": "cuit"},
-            {"data": "email"},
-            {"data": "telefono"},
+            {"data": "cond_fiscal", "render": $.fn.dataTable.render.text()},
+            /*{"data": "email"},
+            {"data": "telefono"},*/
             {"data": "activo"},
             {"data": "pide_factura"},
             {"data": "acciones"},

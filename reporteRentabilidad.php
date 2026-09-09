@@ -100,7 +100,7 @@ $hasta=$hoy;?>
                           //$sql2 = "SELECT $formatoFechaFin AS mes, SUM(c.$monto) AS monto FROM cobros c WHERE c.fecha_cobro IS NOT NULL AND c.fecha_cobro >= DATE_SUB(CURDATE(), INTERVAL 11 MONTH) GROUP BY $formatoFechaFin";
 
                           //reconstruccion de la consulta que obtiene la rentabilidad mensual, teniendo en cuenta los pagos realizados
-                          $sql2 = "SELECT $formatoFechaFin AS mes, SUM(c.$monto) AS monto, SUM(p.pagado) as pagado_monto_pesos, SUM(p.pagado/p.cotizacion_usd) AS pagado_monto_dolares FROM cobros c LEFT JOIN (SELECT pc.id_cobro,SUM(pc.monto) AS pagado,c.cotizacion_usd FROM pagos_colaboradores pc JOIN cobros c ON pc.id_cobro=c.id GROUP BY c.id) p ON p.id_cobro=c.id WHERE c.fecha_cobro IS NOT NULL AND c.fecha_cobro >= DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-01'), INTERVAL 11 MONTH) GROUP BY $formatoFechaFin";
+                          $sql2 = "SELECT $formatoFechaFin AS mes, SUM(c.$monto) AS monto, SUM(p.pagado) as pagado_monto_pesos, SUM(p.pagado/p.cotizacion_usd) AS pagado_monto_dolares FROM cobros c LEFT JOIN (SELECT pc.id_cobro,SUM(pc.monto) AS pagado,c.cotizacion_usd FROM pagos_colaboradores pc JOIN cobros c ON pc.id_cobro=c.id GROUP BY c.id) p ON p.id_cobro=c.id WHERE NOT EXISTS (SELECT 1 FROM facturas nc WHERE nc.id_factura_asociada=c.id_factura AND nc.tipo_comprobante IN (3,8,13) AND nc.estado='A' AND nc.cae IS NOT NULL AND nc.cae <> '') AND c.fecha_cobro IS NOT NULL AND c.fecha_cobro >= DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-01'), INTERVAL 11 MONTH) GROUP BY $formatoFechaFin";
                           $q2 = $pdo->prepare($sql2);
                           //echo $sql2."<br>";
                           $q2->execute();

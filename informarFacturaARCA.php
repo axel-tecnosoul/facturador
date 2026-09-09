@@ -3,6 +3,18 @@ ini_set("display_errors",1);
 ini_set("display_startup_errors",1);
 error_reporting(E_ALL);
 
+function puedeReintentarFacturaARCA($factura) {
+    if (!$factura || !empty($factura['cae']) || ($factura['estado'] ?? null) === 'A'
+        || !empty($factura['id_nota_credito']) || !empty($factura['id_factura_asociada'])
+        || in_array((int)($factura['tipo_comprobante'] ?? 0), array(3,8,13), true)) {
+        return false;
+    }
+    $error = (string)($factura['error_arca'] ?? '');
+    return strpos($error, 'SOAP-ERROR: Encoding:') === 0
+        || strpos($error, 'Validacion local:') === 0
+        || $error === 'No se pudo obtener datos del emisor';
+}
+
 /**
  * Función para informar factura a ARCA
  * @param int $idFactura ID de la factura a informar
@@ -20,13 +32,20 @@ function informarFacturaARCA($idFactura) {
     $pdo = Database::connect();
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    $nombreBloqueo = 'factura_arca_'.(int)$idFactura;
+    $qBloqueo = $pdo->prepare('SELECT GET_LOCK(?, 0)');
+    $qBloqueo->execute(array($nombreBloqueo));
+    if ((int)$qBloqueo->fetchColumn() !== 1) {
+        return 'Error: Esta factura ya se esta procesando. Espere y consulte su estado.';
+    }
+    try {
     $modoDebug=0;
     if ($modoDebug==1) {
         $pdo->beginTransaction();
         var_dump($idFactura);
     }
     
-    $sql = "SELECT f.*, c.nombre, c.cuit, c.email, c.telefono, c.direccion, c.pide_factura, c.cond_fiscal, c.id_cond_fiscal, co.id_emisor, e.cuit as emisor_cuit, e.punto_venta, e.razon_social as emisor_razon_social
+    $sql = "SELECT f.*, c.nombre, c.cuit, c.email, c.telefono, c.direccion, c.pide_factura, c.cond_fiscal, c.id_cond_fiscal, co.id_emisor,  e.cuit as emisor_cuit, e.punto_venta, e.razon_social as emisor_razon_social
             FROM facturas f 
             INNER JOIN clientes c ON f.id_cliente = c.id 
             LEFT JOIN cobros co ON f.id = co.id_factura
@@ -41,16 +60,45 @@ function informarFacturaARCA($idFactura) {
       return "Error: Factura no encontrada";
     }
 
+    if (!empty($data['cae']) || $data['estado'] === 'A') {
+        return 'Error: La factura ya esta autorizada. No se volvera a emitir.';
+    }
+    if ((!empty($data['solicitud_arca']) || !empty($data['intentos_arca'])) && !puedeReintentarFacturaARCA($data)) {
+        return 'Error: Debe verificar el estado de la factura en ARCA antes de reintentar.';
+    }
+
+    // Las NC tienen su propio circuito y no deben reenviarse como facturas C.
+    if (!empty($data['id_factura_asociada']) || in_array((int)$data['tipo_comprobante'], array(3, 8, 13), true)) {
+        Database::disconnect();
+        return 'Error: La nota de credito debe gestionarse desde el cobro original';
+    }
+
+    // Cargar en cada llamada: require_once puede dejar estas variables fuera de alcance.
+    require __DIR__.'/config_facturacion_electronica.php';
+    $homologacion_db = (int)$homologacion === 1 ? 1 : 0;
+    if ($data['homologacion'] !== null && (int)$data['homologacion'] !== $homologacion_db) {
+        return 'Error: El ambiente ARCA no coincide con el del intento original.';
+    }
+    $pdo->prepare('UPDATE facturas SET homologacion = ? WHERE id = ?')->execute([$homologacion_db, $idFactura]);
+
+    require_once __DIR__.'/validarClienteFacturacion.php';
+    $validacionCliente = analizarClienteFacturacion($data);
+    if (!$validacionCliente['valido']) {
+        $pdo->prepare('UPDATE facturas SET error_arca = ? WHERE id = ?')
+            ->execute(['Validacion local: '.implode(' ', $validacionCliente['errores']), $idFactura]);
+        Database::disconnect();
+        return 'Error: '.implode(' ', $validacionCliente['errores']);
+    }
+
     // Para facturas generadas desde cobros, establecemos valores por defecto
     $punto_venta = $data['punto_venta'] ?? 1; // Punto de venta por defecto para homologación
 
     require_once 'vendor/afip/Afip.php'; // SDK de AFIP/ARCA para facturación electrónica
-    require_once 'config_facturacion_electronica.php';//poner $homologacion=1 para facturar en modo homologacion. Retorna $aInitializeAFIP.
-
-    $homologacion_db = (!empty($homologacion) && (int)$homologacion===1) ? 1 : 0;
 
     // Asignación y validación del CUIT del emisor
     $aInitializeAFIP['CUIT'] = preg_replace('/\D+/', '', trim((string)($data['emisor_cuit'] ?? '')));
+    // Evitar que un error de codificacion SOAP termine el proceso sin registrar el fallo.
+    $aInitializeAFIP['exceptions'] = true;
     
     if(empty($aInitializeAFIP['CUIT'])) {
         $sql_error = "UPDATE facturas SET intentos_arca = COALESCE(intentos_arca,0) + 1, homologacion = ?, error_arca = ?, respuesta_arca = ?, punto_venta = ? WHERE id = ?";
@@ -75,11 +123,6 @@ function informarFacturaARCA($idFactura) {
     $imp_trib_db = null;
 
     try {
-        $afip = new Afip($aInitializeAFIP); // Instancia del SDK AFIP/ARCA
-        $server_status = $afip->ElectronicBilling->GetServerStatus();
-        /*echo 'Este es el estado del servidor ARCA:';
-        var_dump($server_status);*/
-
         // Datos de la factura adaptados para tabla 'facturas'
         $ImpTotal = $data["imp_total"];
         
@@ -113,11 +156,11 @@ function informarFacturaARCA($idFactura) {
         }
 
         // RECEPTOR/CLIENTE: Su condición se informa a ARCA (no determina tipo de comprobante)
-        $CondIVA = $data["id_cond_fiscal"] ?? 5; // Condición IVA del cliente (por defecto Consumidor Final)
+        $CondIVA = $validacionCliente['id_cond_fiscal']; // Condición IVA del cliente (por defecto Consumidor Final)
 
         // Datos del cliente
-        $DocNro = $data["cuit"] ?: "0"; // CUIT o 0 para consumidor final
-        $DocTipo = $data["cuit"] ? 80 : 99; // 80=CUIT, 99=Consumidor Final
+        $DocNro = $validacionCliente['cuit'] ?: "0"; // CUIT o 0 para consumidor final
+        $DocTipo = $validacionCliente['cuit'] ? 80 : 99; // 80=CUIT, 99=Consumidor Final
         $doc_nro_db = (string)$DocNro;
         $doc_tipo_db = (int)$DocTipo;
 
@@ -143,8 +186,6 @@ function informarFacturaARCA($idFactura) {
             'DocTipo' 	=> $DocTipo, // Tipo de documento del comprador (99 consumidor final, ver tipos disponibles). Para comprobantes clase A y M el campo DocTipo debe ser igual a 80 (CUIT)
             'DocNro' 	=> $DocNro,  // Número de documento del comprador (0 consumidor final)
             'CondicionIVAReceptorId' 	=> $CondIVA, // Condición frente al IVA del receptor/cliente
-            'CbteDesde' 	=> 2,  // Número de comprobante o numero del primer comprobante en caso de ser mas de uno
-            'CbteHasta' 	=> 2,  // Número de comprobante o numero del último comprobante en caso de ser mas de uno
             'CbteFch' 	=> $fecha_cbte, // (Opcional) Fecha del comprobante (yyyymmdd) o fecha actual si es nulo
             'ImpTotal' 	=> $ImpTotal,//121, // Importe total del comprobante
             'ImpTotConc' 	=> 0,   // Importe neto no gravado
@@ -192,9 +233,15 @@ function informarFacturaARCA($idFactura) {
             var_dump($data_factura);
         }
 
+        $solicitud = json_encode($data_factura, JSON_THROW_ON_ERROR);
+        $pdo->prepare('UPDATE facturas SET solicitud_arca = ?, emisor_cuit = ?, punto_venta = ?, tipo_comprobante = ?, condicion_iva_receptor = ?, concepto = ?, doc_tipo = ?, doc_nro = ?, imp_neto = ?, imp_iva = ? WHERE id = ?')
+            ->execute([$solicitud,$emisor_cuit,$punto_venta,$tipo_comprobante,$CondIVA,$concepto_db,$doc_tipo_db,$doc_nro_db,$imp_neto_db,$imp_iva_db,$idFactura]);
+        $afip = new Afip($aInitializeAFIP);
+        $pdo->prepare('UPDATE facturas SET error_arca = ? WHERE id = ?')
+            ->execute(array('Envio en curso o pendiente de conciliacion con ARCA.', $idFactura));
         $res = $afip->ElectronicBilling->CreateNextVoucher($data_factura);
         
-        if(isset($res['CAE'])){
+        if(!empty($res['CAE'])){
             $estado="A";
             $CAE=$res['CAE'];//CAE asignado el comprobante
             $CAEFchVto=$res['CAEFchVto'];//Fecha de vencimiento del CAE (yyyy-mm-dd)
@@ -247,7 +294,7 @@ function informarFacturaARCA($idFactura) {
         Database::disconnect();
         return $resultado;
         
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         // Guardar error de excepción y snapshot en un unico update
         $error_msg = $e->getMessage();
         $emisor_cuit = preg_replace('/\D+/', '', trim((string)($data['emisor_cuit'] ?? '')));
@@ -269,23 +316,23 @@ function informarFacturaARCA($idFactura) {
         Database::disconnect();
         return 'Error: ' . $error_msg;
     }
+    } finally {
+        $pdo->prepare('SELECT RELEASE_LOCK(?)')->execute(array($nombreBloqueo));
+        Database::disconnect();
+    }
+
 }
 
-// Si se ejecuta directamente via GET (compatibilidad hacia atrás)
+// Abrir esta URL solo navega: la emision se solicita por POST desde el cobro.
 if (!debug_backtrace() && !empty($_GET['id'])) {
-    require("config.php");
-    if(empty($_SESSION['user']) || empty($_SESSION['user']['id'])){
-      header("Location: index.php");
-      die("Redirecting to index.php"); 
-    }
-    
-    $resultado = informarFacturaARCA((int)$_GET['id']);
-    echo $resultado;
-    
-    if(stripos($resultado, 'Error') === false) {
-        echo "<br><a href='verVenta.php?id=".$_GET["id"]."'>Volver a Ver venta</a>";
-    } else {
-        echo "<br><a href='listarVentas.php'>Volver al listado</a>";
-    }
+    require('config.php');
+    if (empty($_SESSION['user'])) { header('Location: index.php'); exit; }
+    require_once 'database.php';
+    $pdo = Database::connect();
+    $q = $pdo->prepare('SELECT id FROM cobros WHERE id_factura = ? LIMIT 1');
+    $q->execute(array((int)$_GET['id']));
+    $idCobro = $q->fetchColumn();
+    header('Location: '.($idCobro ? 'modificarCobro.php?id='.(int)$idCobro : 'listarCobros.php'));
+    exit;
 }
 ?>

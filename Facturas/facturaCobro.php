@@ -50,6 +50,9 @@ function letraComprobante($value) {
         1 => 'A',
         6 => 'B',
         11 => 'C',
+        3 => 'A',
+        8 => 'B',
+        13 => 'C',
     );
 
     $numeric = (int)$value;
@@ -112,17 +115,16 @@ class PDF extends FPDF {
   }
 
   function copia($emision) {
-    global $homologacion;
     $data = $this->factura;
     $items = $this->items;
-
-    /*if ((int)$homologacion === 1 || !empty($data['homologacion'])) {
-        $this->SetFont('Arial', 'B', 42);
-        $this->SetTextColor(192, 192, 192);
-        $this->SetXY(20, 145);
-        $this->Cell(0, 10, pdfText('No válida'));
+    if ((int)$data['homologacion'] === 1) {
+        $this->SetTextColor(225, 225, 225);
+        $this->SetFont('Arial', 'B', 37);
+        $this->Text(35, 151, pdfText('HOMOLOGACION'));
+        $this->SetFont('Arial', 'B', 22);
+        $this->Text(48, 166, pdfText('SIN VALIDEZ FISCAL'));
         $this->SetTextColor(0, 0, 0);
-    }*/
+    }
 
     $puntoVenta = !empty($data['punto_venta']) ? str_pad((string)$data['punto_venta'], 4, '0', STR_PAD_LEFT) : '';
     $numeroComprobante = !empty($data['numero_comprobante']) ? str_pad((string)$data['numero_comprobante'], 8, '0', STR_PAD_LEFT) : '';
@@ -153,6 +155,9 @@ class PDF extends FPDF {
     $condicionIvaEmisor = !empty($data['emisor_condicion_iva']) ? (string)$data['emisor_condicion_iva'] : 'Responsable Inscripto';
     $totalCalculado = 0;
     $obs = '';
+    if (!empty($data['id_factura_asociada'])) {
+        $obs = 'Factura asociada: '.str_pad((string)$data['original_punto_venta'], 5, '0', STR_PAD_LEFT).'-'.str_pad((string)$data['original_numero'], 8, '0', STR_PAD_LEFT).' | Motivo: '.(string)$data['motivo_nc'];
+    }
 
     /*
     ancho_total = AT = 210;
@@ -225,7 +230,7 @@ class PDF extends FPDF {
     $this->SetFont('Arial', 'B', 16);
     $this->Cell(83, 10, pdfText($razonSocialEmisor), 0, 0, 'C', 0);
     $this->Cell(28, 10, pdfText(''), 0, 0, 'C', 0);
-    $this->Cell(83, 10, pdfText('FACTURA'), 0, 0, 'L', 0);
+    $this->Cell(83, 10, pdfText(in_array((int)$tipo_comprobante, [3,8,13], true) ? 'NOTA DE CREDITO' : 'FACTURA'), 0, 0, 'L', 0);
     $this->Ln(10);
 
     $this->Cell(83, 6, pdfText(''), 0, 0, 'C', 0);
@@ -466,7 +471,7 @@ class PDF extends FPDF {
     if (!is_dir($codesDir)) {
       @mkdir($codesDir, 0777, true);
     }
-    $codeFile = 'qr_factura_cobro.png';
+    $codeFile = 'qr_factura_cobro_'.(int)$data['id'].'.png';
     QRcode::png('https://www.afip.gob.ar/fe/qr/?p=' . base64_encode(json_encode($aQR)), $codesDir . $codeFile, 'L', 5);
 
     if (is_file($codesDir . $codeFile)) {
@@ -495,7 +500,7 @@ $pdo = Database::connect();
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $sql = "SELECT f.id, f.fecha_cbte, f.imp_total, f.estado, f.cae, f.fecha_vencimiento_cae, f.numero_comprobante, f.punto_venta, f.tipo_comprobante, f.homologacion, f.emisor_cuit, f.condicion_iva_receptor,
-    f.concepto, f.doc_tipo, f.doc_nro, f.imp_neto, f.imp_iva,
+    f.id_factura_asociada, f.motivo_nc, original.punto_venta AS original_punto_venta, original.numero_comprobante AS original_numero, f.concepto, f.doc_tipo, f.doc_nro, f.imp_neto, f.imp_iva,
     c.razon_social, c.direccion, c.cuit, c.email, c.telefono,
     co.id_emisor,
     e.razon_social AS emisor_razon_social,
@@ -508,7 +513,8 @@ $sql = "SELECT f.id, f.fecha_cbte, f.imp_total, f.estado, f.cae, f.fecha_vencimi
     e.fecha_inicio_actividades AS emisor_fecha_inicio_actividades
   FROM facturas f
     INNER JOIN clientes c ON f.id_cliente = c.id
-    LEFT JOIN cobros co ON f.id = co.id_factura
+    LEFT JOIN facturas original ON original.id = f.id_factura_asociada
+    LEFT JOIN cobros co ON COALESCE(f.id_factura_asociada, f.id) = co.id_factura
     LEFT JOIN emisores e ON co.id_emisor = e.id
   WHERE f.id = ?";
 $q = $pdo->prepare($sql);

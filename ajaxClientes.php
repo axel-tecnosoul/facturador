@@ -13,7 +13,7 @@ if(!empty($_GET["id_modalidad"]&& $_GET["id_modalidad"] != 0)) {
 
 //Ventas
 $pdo = Database::connect();
-$sql = "SELECT id AS id_cliente, nombre, razon_social, cuit, telefono, email, pide_factura, direccion, activo FROM clientes WHERE 1";
+$sql = "SELECT id AS id_cliente, nombre, razon_social, cuit, cond_fiscal, telefono, email, pide_factura, direccion, activo FROM clientes WHERE 1";
 //echo $sql;
 foreach ($pdo->query($sql) as $row) {
 
@@ -26,6 +26,7 @@ foreach ($pdo->query($sql) as $row) {
     "nombre"=>$row["nombre"],
     "razon_social"=>$row["razon_social"],
     "cuit"=>$row["cuit"],
+    "cond_fiscal"=>trim((string)$row["cond_fiscal"]) ?: 'Sin cargar',
     //"direccion"=>$row["direccion"],
     "email"=>$row["email"],
     "telefono"=>$row["telefono"],
