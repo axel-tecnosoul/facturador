@@ -16,45 +16,10 @@
     "2026-09": 1.9
   },
   "casos_reales": [
-    {
-      "nombre": "Club de pesca - $/HS - mensual",
-      "precio_base": 107000,
-      "periodo": "2026-09",
-      "ipc": [1.9],
-      "redondeo": 1000,
-      "tipo_redondeo": "superior",
-      "esperado": 110000
-    },
-    {
-      "nombre": "OSPIA - c/hs - mensual",
-      "precio_base": 191000,
-      "periodo": "2026-08",
-      "ipc": [1.7],
-      "redondeo": 1000,
-      "tipo_redondeo": "superior",
-      "esperado": 195000
-    },
-    {
-      "nombre": "OSPIA - 5hs derivado",
-      "precio_hora": 195000,
-      "multiplicador": 5,
-      "esperado": 975000
-    },
-    {
-      "nombre": "Club de pesca - Hosting sistema - cuatrimestral",
-      "precio_base": 15500,
-      "ipc": [2.1, 1.9, 2.1, 1.7],
-      "redondeo": 500,
-      "tipo_redondeo": "superior",
-      "esperado": 17000
-    },
-    {
-      "nombre": "Pipore - $/HS - trimestral",
-      "precio_base": 155000,
-      "ipc": [2.1, 1.9, 2.1],
-      "redondeo": 5000,
-      "tipo_redondeo": "superior",
-      "esperado": 170000
-    }
+    {"nombre":"Club de pesca - $/HS - mensual","precio_base":107000,"ipc":[1.9],"redondeo":1000,"tipo_redondeo":"superior","esperado":110000},
+    {"nombre":"OSPIA - c/hs - mensual","precio_base":191000,"ipc":[1.7],"redondeo":1000,"tipo_redondeo":"superior","esperado":195000},
+    {"nombre":"OSPIA - 5hs derivado","precio_hora":195000,"multiplicador":5,"esperado":975000},
+    {"nombre":"Club de pesca - Hosting sistema - cuatrimestral","precio_base":15500,"ipc":[2.1,1.9,2.1,1.7],"redondeo":500,"tipo_redondeo":"superior","esperado":17000},
+    {"nombre":"Pipore - $/HS - trimestral","precio_base":155000,"ipc":[3.4,2.6,2.1],"redondeo":5000,"tipo_redondeo":"superior","esperado":170000}
   ]
 }
