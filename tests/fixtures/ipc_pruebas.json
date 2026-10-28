@@ -1,0 +1,32 @@
+{
+  "descripcion": "Datos temporales para probar calculos de IPC sin depender de la base de datos",
+  "ipc": [
+    {"periodo": "2026-01-01", "porcentaje": 2.9},
+    {"periodo": "2026-02-01", "porcentaje": 2.4},
+    {"periodo": "2026-03-01", "porcentaje": 3.7},
+    {"periodo": "2026-04-01", "porcentaje": 2.8}
+  ],
+  "casos": [
+    {
+      "descripcion": "Ajuste mensual sin redondeo",
+      "precio_inicial": 100000,
+      "desde": "2026-01-01",
+      "hasta": "2026-04-01",
+      "redondeo": 0
+    },
+    {
+      "descripcion": "Ajuste acumulado con redondeo a 100",
+      "precio_inicial": 150000,
+      "desde": "2026-01-01",
+      "hasta": "2026-04-01",
+      "redondeo": 100
+    },
+    {
+      "descripcion": "Ajuste trimestral acumulando IPC del periodo",
+      "precio_inicial": 250000,
+      "desde": "2026-02-01",
+      "hasta": "2026-04-01",
+      "redondeo": 100
+    }
+  ]
+}
