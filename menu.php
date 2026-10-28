@@ -13,6 +13,7 @@
     <li><a class="sidebar-header" href="reporteRentabilidad.php"><i data-feather="check-square"></i><span>Rentabilidad</span><i class="fa fa-angle-right pull-right"></i></a></li><?php
 		if ($id_perfil != 3) {?>
 		  <li><a class="sidebar-header" href="listarClientes.php"><i data-feather="users"></i><span>Clientes</span><i class="fa fa-angle-right pull-right"></i></a></li>
+      <li><a class="sidebar-header" href="ctaCteClientes.php"><i data-feather="book-open"></i><span>Cta. Cte. Clientes</span><i class="fa fa-angle-right pull-right"></i></a></li>
 		  <li><a class="sidebar-header" href="listarEmisores.php"><i data-feather="file-text"></i><span>Emisores</span><i class="fa fa-angle-right pull-right"></i></a></li><?php 
 		}
 		if ($id_perfil == 1) {?>
